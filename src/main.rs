@@ -6,8 +6,10 @@ use ggez::{
     event::{self, EventHandler, MouseButton},
     graphics::{self, Color, DrawMode, Mesh, Rect, Text},
     mint::Point2,
-    timer, Context, ContextBuilder, GameError, GameResult,
+    Context, ContextBuilder, GameError, GameResult,
 };
+
+mod model;
 
 const CELL_SIZE: (f32, f32) = (20.0, 20.0);
 const GRID_SIZE: (usize, usize) = (40, 40);
@@ -27,7 +29,6 @@ const LINE_COLOR: Color = Color {
 const TEXT_COLOR: Color = Color::BLACK;
 
 struct State {
-    screen: graphics::ScreenImage,
     grid: Vec<Vec<bool>>,
     fps: u32,
     running: bool,
@@ -37,13 +38,13 @@ impl State {
     #[allow(unused)]
     pub fn new(ctx: &mut Context) -> Self {
         State {
-            screen: graphics::ScreenImage::new(
-                ctx,
-                graphics::ImageFormat::Rgba8UnormSrgb,
-                1.,
-                1.,
-                1,
-            ),
+            // screen: graphics::ScreenImage::new(
+            //     ctx,
+            //     graphics::ImageFormat::Rgba8UnormSrgb,
+            //     1.,
+            //     1.,
+            //     1,
+            // ),
             grid: vec![vec![false; GRID_SIZE.1 as usize]; GRID_SIZE.0 as usize],
             fps: 1,
             running: false,
@@ -117,7 +118,6 @@ impl EventHandler<GameError> for State {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        //graphics::clear(ctx, BG_COLOR);
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
         //let mut canvas = graphics::Canvas::from_screen_image(ctx, &mut self.screen, BG_COLOR);
 

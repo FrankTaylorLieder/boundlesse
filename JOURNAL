@@ -16,5 +16,10 @@ Journal:
   - Upgraded to latest ggez
   - Added rand() starter
 
-Commit:
+Commit: 84950f2
 
+- Switch out the model for an infinite hashmap.
+  - Ref: https://lbarasti.com/post/game_of_life/
+  - Created a sparse grid data structure, with unit tests.
+
+Commit: 
