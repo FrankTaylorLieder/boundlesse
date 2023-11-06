@@ -27,4 +27,11 @@ Commit: f03a329
 - First attempt at the sparse version of the algorithm.
   - Looks like it's not correct, or fast!
 
-  
+Commit: 0d0b866
+
+- Fix: get the thresholds right!
+- ISSUE: seems to be skipping frames if things take too long. Hence jerky output.
+
+Commit:
+
+- Change draw to iterate the actual cells, not all cells.

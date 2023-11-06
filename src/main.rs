@@ -14,9 +14,10 @@ use grid::{GridCoord, SparseGrid};
 
 const CELL_SIZE: (f32, f32) = (10.0, 10.0);
 const GRID_SIZE: (usize, usize) = (100, 100);
+const VIEW_SIZE: (usize, usize) = (200, 150);
 const WINDOW_SIZE: (f32, f32) = (
-    CELL_SIZE.0 * GRID_SIZE.0 as f32,
-    CELL_SIZE.1 * GRID_SIZE.1 as f32,
+    CELL_SIZE.0 * VIEW_SIZE.0 as f32,
+    CELL_SIZE.1 * VIEW_SIZE.1 as f32,
 );
 const BG_COLOR: Color = Color::WHITE;
 const CELL_COLOR: Color = Color::BLACK;
@@ -48,8 +49,10 @@ impl State {
     #[allow(unused)]
     pub fn rand(ctx: &mut Context) -> Self {
         let mut s = State::new(ctx);
-        for x in 0..GRID_SIZE.0 {
-            for y in 0..GRID_SIZE.1 {
+        let off_x = (VIEW_SIZE.0 - GRID_SIZE.0) / 2;
+        let off_y = (VIEW_SIZE.1 - GRID_SIZE.1) / 2;
+        for x in off_x..(GRID_SIZE.0 + off_x) {
+            for y in off_y..(GRID_SIZE.1 + off_y) {
                 if rand::random() {
                     s.grid.set(GridCoord::Valid(x as i64, y as i64), 1);
                 }
@@ -68,7 +71,7 @@ impl EventHandler<GameError> for State {
                 next.tally(&c.expand());
             }
 
-            next.retain(|gc, v| *v == 2 || (*v == 3 && self.grid.get(gc).is_some()));
+            next.retain(|gc, v| *v == 3 || (*v == 4 && self.grid.get(gc).is_some()));
 
             self.grid = next;
         }
@@ -78,10 +81,9 @@ impl EventHandler<GameError> for State {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
-        //let mut canvas = graphics::Canvas::from_screen_image(ctx, &mut self.screen, BG_COLOR);
 
-        for i in 0..GRID_SIZE.0 as usize {
-            for j in 0..GRID_SIZE.1 as usize {
+        for i in 0..VIEW_SIZE.0 as usize {
+            for j in 0..VIEW_SIZE.1 as usize {
                 if self
                     .grid
                     .get(&GridCoord::Valid(i as i64, j as i64))
@@ -168,24 +170,24 @@ impl EventHandler<GameError> for State {
     //     Ok(())
     // }
 
-    // fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, repeat: bool) -> GameResult {
-    //     if let Some(keycode) = input.keycode {
-    //         if keycode == KeyCode::Space && !repeat {
-    //             self.running ^= true;
-    //         }
-    //         if keycode == KeyCode::Up {
-    //             self.fps += 1;
-    //         }
-    //         if keycode == KeyCode::Down && self.fps > 1 {
-    //             self.fps -= 1;
-    //         }
-    //         if keycode == KeyCode::Delete {
-    //             self.grid = vec![vec![false; GRID_SIZE.1 as usize]; GRID_SIZE.0 as usize];
-    //         }
-    //     }
+    fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, repeat: bool) -> GameResult {
+        if let Some(keycode) = input.keycode {
+            if keycode == KeyCode::Space && !repeat {
+                self.running ^= true;
+            }
+            if keycode == KeyCode::Up {
+                self.fps += 1;
+            }
+            if keycode == KeyCode::Down && self.fps > 1 {
+                self.fps -= 1;
+            }
+            if keycode == KeyCode::Delete {
+                self.grid = SparseGrid::new();
+            }
+        }
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 }
 
 fn main() -> GameResult {
