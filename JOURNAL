@@ -1,0 +1,20 @@
+Rusty Game of Life
+
+Goals:
+  - Infinite world
+  - Pan/zoom camera
+  - Fast as possible
+
+Components:
+  - UI using ggez (see: https://www.youtube.com/watch?v=DoK7bL_83gI)
+    - https://github.com/mathletedev/game-of-life
+  - Model - maintaining the universe and updating for each generation.
+
+Journal:
+
+- Get the example version running
+  - Upgraded to latest ggez
+  - Added rand() starter
+
+Commit:
+
