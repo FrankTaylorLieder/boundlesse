@@ -9,17 +9,18 @@ use ggez::{
     Context, ContextBuilder, GameError, GameResult,
 };
 
-mod model;
+mod grid;
+use grid::{GridCoord, SparseGrid};
 
-const CELL_SIZE: (f32, f32) = (20.0, 20.0);
-const GRID_SIZE: (usize, usize) = (40, 40);
+const CELL_SIZE: (f32, f32) = (10.0, 10.0);
+const GRID_SIZE: (usize, usize) = (100, 100);
 const WINDOW_SIZE: (f32, f32) = (
     CELL_SIZE.0 * GRID_SIZE.0 as f32,
     CELL_SIZE.1 * GRID_SIZE.1 as f32,
 );
 const BG_COLOR: Color = Color::WHITE;
 const CELL_COLOR: Color = Color::BLACK;
-const LINE_WIDTH: f32 = 2.0;
+const LINE_WIDTH: f32 = 0.1;
 const LINE_COLOR: Color = Color {
     r: 0.5,
     g: 0.5,
@@ -29,7 +30,7 @@ const LINE_COLOR: Color = Color {
 const TEXT_COLOR: Color = Color::BLACK;
 
 struct State {
-    grid: Vec<Vec<bool>>,
+    grid: SparseGrid,
     fps: u32,
     running: bool,
 }
@@ -38,14 +39,7 @@ impl State {
     #[allow(unused)]
     pub fn new(ctx: &mut Context) -> Self {
         State {
-            // screen: graphics::ScreenImage::new(
-            //     ctx,
-            //     graphics::ImageFormat::Rgba8UnormSrgb,
-            //     1.,
-            //     1.,
-            //     1,
-            // ),
-            grid: vec![vec![false; GRID_SIZE.1 as usize]; GRID_SIZE.0 as usize],
+            grid: SparseGrid::new(),
             fps: 1,
             running: false,
         }
@@ -56,7 +50,9 @@ impl State {
         let mut s = State::new(ctx);
         for x in 0..GRID_SIZE.0 {
             for y in 0..GRID_SIZE.1 {
-                s.grid[x][y] = rand::random();
+                if rand::random() {
+                    s.grid.set(GridCoord::Valid(x as i64, y as i64), 1);
+                }
             }
         }
 
@@ -67,51 +63,14 @@ impl State {
 impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         while ctx.time.check_update_time(self.fps) && self.running {
-            let mut coords: Vec<(usize, usize)> = vec![];
-
-            for i in 0..GRID_SIZE.0 as usize {
-                let left = if i > 0 {
-                    i - 1
-                } else {
-                    GRID_SIZE.0 as usize - 1
-                };
-                let right = if i < GRID_SIZE.0 as usize - 1 {
-                    i + 1
-                } else {
-                    0
-                };
-                for j in 0..GRID_SIZE.1 as usize {
-                    let up = if j > 0 {
-                        j - 1
-                    } else {
-                        GRID_SIZE.1 as usize - 1
-                    };
-                    let down = if j < GRID_SIZE.1 as usize - 1 {
-                        j + 1
-                    } else {
-                        0
-                    };
-
-                    let neighbors = self.grid[left][j] as u8
-                        + self.grid[left][up] as u8
-                        + self.grid[i][up] as u8
-                        + self.grid[right][up] as u8
-                        + self.grid[right][j] as u8
-                        + self.grid[right][down] as u8
-                        + self.grid[i][down] as u8
-                        + self.grid[left][down] as u8;
-
-                    if (self.grid[i][j] && (neighbors < 2 || neighbors > 3))
-                        || (!self.grid[i][j] && neighbors == 3)
-                    {
-                        coords.push((i, j));
-                    }
-                }
+            let mut next = SparseGrid::new();
+            for c in self.grid.elements() {
+                next.tally(&c.expand());
             }
 
-            for coord in coords {
-                self.grid[coord.0][coord.1] ^= true;
-            }
+            next.retain(|gc, v| *v == 2 || (*v == 3 && self.grid.get(gc).is_some()));
+
+            self.grid = next;
         }
 
         Ok(())
@@ -123,7 +82,11 @@ impl EventHandler<GameError> for State {
 
         for i in 0..GRID_SIZE.0 as usize {
             for j in 0..GRID_SIZE.1 as usize {
-                if self.grid[i][j] {
+                if self
+                    .grid
+                    .get(&GridCoord::Valid(i as i64, j as i64))
+                    .is_some()
+                {
                     let rect = Mesh::new_rectangle(
                         ctx,
                         DrawMode::fill(),
@@ -193,36 +156,36 @@ impl EventHandler<GameError> for State {
         Ok(())
     }
 
-    fn mouse_button_down_event(
-        &mut self,
-        _ctx: &mut Context,
-        _button: MouseButton,
-        x: f32,
-        y: f32,
-    ) -> GameResult {
-        self.grid[(x / CELL_SIZE.0).floor() as usize][(y / CELL_SIZE.1).floor() as usize] ^= true;
+    // fn mouse_button_down_event(
+    //     &mut self,
+    //     _ctx: &mut Context,
+    //     _button: MouseButton,
+    //     x: f32,
+    //     y: f32,
+    // ) -> GameResult {
+    //     self.grid[(x / CELL_SIZE.0).floor() as usize][(y / CELL_SIZE.1).floor() as usize] ^= true;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
-    fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, repeat: bool) -> GameResult {
-        if let Some(keycode) = input.keycode {
-            if keycode == KeyCode::Space && !repeat {
-                self.running ^= true;
-            }
-            if keycode == KeyCode::Up {
-                self.fps += 1;
-            }
-            if keycode == KeyCode::Down && self.fps > 1 {
-                self.fps -= 1;
-            }
-            if keycode == KeyCode::Delete {
-                self.grid = vec![vec![false; GRID_SIZE.1 as usize]; GRID_SIZE.0 as usize];
-            }
-        }
+    // fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, repeat: bool) -> GameResult {
+    //     if let Some(keycode) = input.keycode {
+    //         if keycode == KeyCode::Space && !repeat {
+    //             self.running ^= true;
+    //         }
+    //         if keycode == KeyCode::Up {
+    //             self.fps += 1;
+    //         }
+    //         if keycode == KeyCode::Down && self.fps > 1 {
+    //             self.fps -= 1;
+    //         }
+    //         if keycode == KeyCode::Delete {
+    //             self.grid = vec![vec![false; GRID_SIZE.1 as usize]; GRID_SIZE.0 as usize];
+    //         }
+    //     }
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 }
 
 fn main() -> GameResult {
@@ -230,7 +193,8 @@ fn main() -> GameResult {
         .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
         .build()?;
 
-    let state = State::rand(&mut ctx);
+    let mut state = State::rand(&mut ctx);
+    state.running = true;
 
     event::run(ctx, event_loop, state);
 }

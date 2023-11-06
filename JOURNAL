@@ -22,4 +22,9 @@ Commit: 84950f2
   - Ref: https://lbarasti.com/post/game_of_life/
   - Created a sparse grid data structure, with unit tests.
 
-Commit: 
+Commit: f03a329
+
+- First attempt at the sparse version of the algorithm.
+  - Looks like it's not correct, or fast!
+
+  
