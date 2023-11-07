@@ -32,6 +32,7 @@ const TEXT_COLOR: Color = Color::BLACK;
 
 struct State {
     grid: SparseGrid,
+    show_grid: bool,
     fps: u32,
     running: bool,
 }
@@ -41,6 +42,7 @@ impl State {
     pub fn new(ctx: &mut Context) -> Self {
         State {
             grid: SparseGrid::new(),
+            show_grid: true,
             fps: 1,
             running: false,
         }
@@ -82,62 +84,46 @@ impl EventHandler<GameError> for State {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
 
-        for i in 0..VIEW_SIZE.0 as usize {
-            let line = Mesh::new_line(
-                ctx,
-                &vec![
-                    Point2 {
-                        x: i as f32 * CELL_SIZE.0,
-                        y: 0.0,
-                    },
-                    Point2 {
-                        x: i as f32 * CELL_SIZE.0,
-                        y: WINDOW_SIZE.1,
-                    },
-                ],
-                LINE_WIDTH,
-                LINE_COLOR,
-            )?;
-            canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+        if self.show_grid {
+            for i in 0..VIEW_SIZE.0 as usize {
+                let line = Mesh::new_line(
+                    ctx,
+                    &vec![
+                        Point2 {
+                            x: i as f32 * CELL_SIZE.0,
+                            y: 0.0,
+                        },
+                        Point2 {
+                            x: i as f32 * CELL_SIZE.0,
+                            y: WINDOW_SIZE.1,
+                        },
+                    ],
+                    LINE_WIDTH,
+                    LINE_COLOR,
+                )?;
+                canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+            }
+
+            for j in 0..VIEW_SIZE.1 as usize {
+                let line = Mesh::new_line(
+                    ctx,
+                    &vec![
+                        Point2 {
+                            x: 0.0,
+                            y: j as f32 * CELL_SIZE.1,
+                        },
+                        Point2 {
+                            x: WINDOW_SIZE.0,
+                            y: j as f32 * CELL_SIZE.1,
+                        },
+                    ],
+                    LINE_WIDTH,
+                    LINE_COLOR,
+                )?;
+                canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+            }
         }
 
-        for j in 0..VIEW_SIZE.1 as usize {
-            let line = Mesh::new_line(
-                ctx,
-                &vec![
-                    Point2 {
-                        x: 0.0,
-                        y: j as f32 * CELL_SIZE.1,
-                    },
-                    Point2 {
-                        x: WINDOW_SIZE.0,
-                        y: j as f32 * CELL_SIZE.1,
-                    },
-                ],
-                LINE_WIDTH,
-                LINE_COLOR,
-            )?;
-            canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
-        }
-
-        // for i in 0..VIEW_SIZE.0 as usize {
-        //     for j in 0..VIEW_SIZE.1 as usize {
-        //         if self.grid.is_alive(&GridCoord::Valid(i as i64, j as i64)) {
-        // let rect = Mesh::new_rectangle(
-        //     ctx,
-        //     DrawMode::fill(),
-        //     Rect::new(
-        //         i as f32 * CELL_SIZE.0,
-        //         j as f32 * CELL_SIZE.1,
-        //         CELL_SIZE.0,
-        //         CELL_SIZE.1,
-        //     ),
-        //     CELL_COLOR,
-        // )?;
-        // canvas.draw(&rect, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
-        //         }
-        //     }
-        // }
         for gc in self.grid.elements() {
             if let GridCoord::Valid(x, y) = gc {
                 if x > 0 && x < VIEW_SIZE.0 as i64 && y > 0 && y < VIEW_SIZE.1 as i64 {
@@ -193,6 +179,9 @@ impl EventHandler<GameError> for State {
             }
             if keycode == KeyCode::Delete {
                 self.grid = SparseGrid::new();
+            }
+            if keycode == KeyCode::G {
+                self.show_grid = !self.show_grid;
             }
         }
 

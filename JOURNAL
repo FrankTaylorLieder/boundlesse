@@ -12,28 +12,44 @@ Components:
 
 Journal:
 
-- Get the example version running
-  - Upgraded to latest ggez
-  - Added rand() starter
+  - Get the example version running
+    - Upgraded to latest ggez
+    - Added rand() starter
 
 Commit: 84950f2
 
-- Switch out the model for an infinite hashmap.
-  - Ref: https://lbarasti.com/post/game_of_life/
-  - Created a sparse grid data structure, with unit tests.
+  - Switch out the model for an infinite hashmap.
+    - Ref: https://lbarasti.com/post/game_of_life/
+    - Created a sparse grid data structure, with unit tests.
 
 Commit: f03a329
 
-- First attempt at the sparse version of the algorithm.
-  - Looks like it's not correct, or fast!
+  - First attempt at the sparse version of the algorithm.
+    - Looks like it's not correct, or fast!
 
 Commit: 0d0b866
 
-- Fix: get the thresholds right!
+  - Fix: get the thresholds right!
 
 Commit:
 
-- SOLVED: seems to be skipping frames if things take too long. Hence jerky output.
-  - The grid lines are being drawn too often... removing them speeds up things hugely!
-  - Draw the lines in a separate phase.
-- Change draw to iterate the actual cells, not all cells.
+  - SOLVED: seems to be skipping frames if things take too long. Hence jerky output.
+    - The grid lines are being drawn too often... removing them speeds up things hugely!
+    - Draw the lines in a separate phase.
+  - Change draw to iterate the actual cells, not all cells.
+  - Massive improvement in performance.
+
+Commit: d92d907
+
+  - Added 'g' toggle grid
+
+Commit: 
+
+  - TODO Only return elements in the current view
+  - TODO Implement panning (enable negative coordinates)
+  - TODO Implement zooming
+  - TODO Reinstate the mouse to draw
+  - TODO Implement load/save
+  - TODO Show stats on possible FPS, generation, number of cells, etc.
+  - TODO Parallelise the update function
+  - TODO Convert grid.elements() to an iterator
