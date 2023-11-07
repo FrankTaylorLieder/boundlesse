@@ -52,6 +52,13 @@ Commit: 3d3239d
   - Improved the draw efficiency
   - Added some debug logging to see what is going on
 
+Commit: af0f2f6
+
+  - Panning
+    - Use arrow keys
+      - Normal moves by 10, SHIFTED moves by 100.
+    - 'C' centers again
+    - Move FPS to +/-
 
   - TODO Only return elements in the current view
   - TODO Implement panning (enable negative coordinates)

@@ -1,10 +1,9 @@
 use ggez::glam::*;
 use ggez::graphics::PxScale;
-use ggez::input::keyboard::KeyCode;
-use ggez::input::keyboard::KeyInput;
+use ggez::input::keyboard::{KeyCode, KeyInput, KeyMods};
 use ggez::{
     conf::WindowMode,
-    event::{self, EventHandler, MouseButton},
+    event::{self, EventHandler},
     graphics::{self, Color, DrawMode, Mesh, Rect, Text},
     mint::Point2,
     Context, ContextBuilder, GameError, GameResult,
@@ -42,6 +41,8 @@ struct State {
     actual_fps: f64,
     dirty: bool,
     cell_count: usize,
+    xt: i64,
+    yt: i64,
 }
 
 impl State {
@@ -57,6 +58,8 @@ impl State {
             actual_fps: 0.0,
             dirty: true,
             cell_count: 0,
+            xt: 0,
+            yt: 0,
         }
     }
 
@@ -158,7 +161,9 @@ impl EventHandler<GameError> for State {
 
         for gc in self.grid.elements() {
             if let GridCoord::Valid(x, y) = gc {
-                if x > 0 && x < VIEW_SIZE.0 as i64 && y > 0 && y < VIEW_SIZE.1 as i64 {
+                let x = x + self.xt;
+                let y = y + self.yt;
+                if x >= 0 && x < VIEW_SIZE.0 as i64 && y >= 0 && y < VIEW_SIZE.1 as i64 {
                     let rect = Mesh::new_rectangle(
                         ctx,
                         DrawMode::fill(),
@@ -177,8 +182,8 @@ impl EventHandler<GameError> for State {
 
         if self.show_header {
             let mut text = Text::new(format!(
-                "FPS: {}, Generation: {}, Cells: {}",
-                self.fps, self.generation, self.cell_count
+                "FPS: {}, Pan: ({},{}), Generation: {}, Cells: {}",
+                self.fps, self.xt, self.yt, self.generation, self.cell_count
             ));
             text.set_scale(PxScale::from(50.0));
             canvas.draw(
@@ -206,14 +211,36 @@ impl EventHandler<GameError> for State {
 
     fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, repeat: bool) -> GameResult {
         if let Some(keycode) = input.keycode {
+            let pan_delta = if input.mods.contains(KeyMods::SHIFT) {
+                100
+            } else {
+                10
+            };
+
             if keycode == KeyCode::Space && !repeat {
                 self.running ^= true;
             }
-            if keycode == KeyCode::Up {
+            if keycode == KeyCode::Plus || keycode == KeyCode::Equals {
                 self.fps += 1;
             }
-            if keycode == KeyCode::Down && self.fps > 1 {
+            if (keycode == KeyCode::Minus || keycode == KeyCode::Underline) && self.fps > 1 {
                 self.fps -= 1;
+            }
+            if keycode == KeyCode::Up {
+                self.yt += pan_delta;
+            }
+            if keycode == KeyCode::Down {
+                self.yt += -1 * pan_delta;
+            }
+            if keycode == KeyCode::Left {
+                self.xt += pan_delta;
+            }
+            if keycode == KeyCode::Right {
+                self.xt += -1 * pan_delta;
+            }
+            if keycode == KeyCode::C {
+                self.xt = 0;
+                self.yt = 0;
             }
             if keycode == KeyCode::Delete {
                 self.grid = SparseGrid::new();
