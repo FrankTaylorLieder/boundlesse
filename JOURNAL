@@ -66,11 +66,14 @@ Commit: bf50fae
     - Add all view params to the state.
     - Drive the view_size from the window_size.
 
-Commit:
+Commit: 74c4959
+
+  - Zoom
+    - Implement zoom simply by changing the cell size
+    - Change the pan to keep the current view center in the center.
 
 
   - TODO Only return elements in the current view
-  - TODO Implement panning (enable negative coordinates)
   - TODO Implement zooming
   - TODO Reinstate the mouse to draw
   - TODO Implement load/save
