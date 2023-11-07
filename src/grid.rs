@@ -63,6 +63,10 @@ impl SparseGrid {
         }
     }
 
+    pub fn is_alive(&self, k: &GridCoord) -> bool {
+        self.get(k).is_some()
+    }
+
     pub fn elements(&self) -> Vec<GridCoord> {
         self.elements.keys().map(|k| *k).collect()
     }

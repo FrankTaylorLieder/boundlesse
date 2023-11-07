@@ -30,8 +30,10 @@ Commit: f03a329
 Commit: 0d0b866
 
 - Fix: get the thresholds right!
-- ISSUE: seems to be skipping frames if things take too long. Hence jerky output.
 
 Commit:
 
+- SOLVED: seems to be skipping frames if things take too long. Hence jerky output.
+  - The grid lines are being drawn too often... removing them speeds up things hugely!
+  - Draw the lines in a separate phase.
 - Change draw to iterate the actual cells, not all cells.

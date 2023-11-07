@@ -21,7 +21,7 @@ const WINDOW_SIZE: (f32, f32) = (
 );
 const BG_COLOR: Color = Color::WHITE;
 const CELL_COLOR: Color = Color::BLACK;
-const LINE_WIDTH: f32 = 0.1;
+const LINE_WIDTH: f32 = 1.0;
 const LINE_COLOR: Color = Color {
     r: 0.5,
     g: 0.5,
@@ -71,7 +71,7 @@ impl EventHandler<GameError> for State {
                 next.tally(&c.expand());
             }
 
-            next.retain(|gc, v| *v == 3 || (*v == 4 && self.grid.get(gc).is_some()));
+            next.retain(|gc, v| *v == 3 || (*v == 4 && self.grid.is_alive(gc)));
 
             self.grid = next;
         }
@@ -83,52 +83,6 @@ impl EventHandler<GameError> for State {
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
 
         for i in 0..VIEW_SIZE.0 as usize {
-            for j in 0..VIEW_SIZE.1 as usize {
-                if self
-                    .grid
-                    .get(&GridCoord::Valid(i as i64, j as i64))
-                    .is_some()
-                {
-                    let rect = Mesh::new_rectangle(
-                        ctx,
-                        DrawMode::fill(),
-                        Rect::new(
-                            i as f32 * CELL_SIZE.0,
-                            j as f32 * CELL_SIZE.1,
-                            CELL_SIZE.0,
-                            CELL_SIZE.1,
-                        ),
-                        CELL_COLOR,
-                    )?;
-                    canvas.draw(&rect, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
-                }
-
-                if j == 0 {
-                    continue;
-                }
-
-                let line = Mesh::new_line(
-                    ctx,
-                    &vec![
-                        Point2 {
-                            x: 0.0,
-                            y: j as f32 * CELL_SIZE.1,
-                        },
-                        Point2 {
-                            x: WINDOW_SIZE.0,
-                            y: j as f32 * CELL_SIZE.1,
-                        },
-                    ],
-                    LINE_WIDTH,
-                    LINE_COLOR,
-                )?;
-                canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
-            }
-
-            if i == 0 {
-                continue;
-            }
-
             let line = Mesh::new_line(
                 ctx,
                 &vec![
@@ -145,6 +99,62 @@ impl EventHandler<GameError> for State {
                 LINE_COLOR,
             )?;
             canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+        }
+
+        for j in 0..VIEW_SIZE.1 as usize {
+            let line = Mesh::new_line(
+                ctx,
+                &vec![
+                    Point2 {
+                        x: 0.0,
+                        y: j as f32 * CELL_SIZE.1,
+                    },
+                    Point2 {
+                        x: WINDOW_SIZE.0,
+                        y: j as f32 * CELL_SIZE.1,
+                    },
+                ],
+                LINE_WIDTH,
+                LINE_COLOR,
+            )?;
+            canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+        }
+
+        // for i in 0..VIEW_SIZE.0 as usize {
+        //     for j in 0..VIEW_SIZE.1 as usize {
+        //         if self.grid.is_alive(&GridCoord::Valid(i as i64, j as i64)) {
+        // let rect = Mesh::new_rectangle(
+        //     ctx,
+        //     DrawMode::fill(),
+        //     Rect::new(
+        //         i as f32 * CELL_SIZE.0,
+        //         j as f32 * CELL_SIZE.1,
+        //         CELL_SIZE.0,
+        //         CELL_SIZE.1,
+        //     ),
+        //     CELL_COLOR,
+        // )?;
+        // canvas.draw(&rect, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+        //         }
+        //     }
+        // }
+        for gc in self.grid.elements() {
+            if let GridCoord::Valid(x, y) = gc {
+                if x > 0 && x < VIEW_SIZE.0 as i64 && y > 0 && y < VIEW_SIZE.1 as i64 {
+                    let rect = Mesh::new_rectangle(
+                        ctx,
+                        DrawMode::fill(),
+                        Rect::new(
+                            x as f32 * CELL_SIZE.0,
+                            y as f32 * CELL_SIZE.1,
+                            CELL_SIZE.0,
+                            CELL_SIZE.1,
+                        ),
+                        CELL_COLOR,
+                    )?;
+                    canvas.draw(&rect, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+                }
+            }
         }
 
         let text = Text::new(self.fps.to_string());
