@@ -60,6 +60,15 @@ Commit: af0f2f6
     - 'C' centers again
     - Move FPS to +/-
 
+Commit: bf50fae
+
+  - Window resize
+    - Add all view params to the state.
+    - Drive the view_size from the window_size.
+
+Commit:
+
+
   - TODO Only return elements in the current view
   - TODO Implement panning (enable negative coordinates)
   - TODO Implement zooming
