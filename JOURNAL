@@ -43,13 +43,20 @@ Commit: d92d907
 
   - Added 'g' toggle grid
 
-Commit: 
+Commit: 3d3239d
+
+  - Show stats on possible FPS, generation, number of cells, etc.
+    - Added generation count
+    - Increased the size of the text
+    - Number of cells
+  - Improved the draw efficiency
+  - Added some debug logging to see what is going on
+
 
   - TODO Only return elements in the current view
   - TODO Implement panning (enable negative coordinates)
   - TODO Implement zooming
   - TODO Reinstate the mouse to draw
   - TODO Implement load/save
-  - TODO Show stats on possible FPS, generation, number of cells, etc.
   - TODO Parallelise the update function
   - TODO Convert grid.elements() to an iterator

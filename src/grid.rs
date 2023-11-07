@@ -98,6 +98,10 @@ impl SparseGrid {
     {
         self.elements.retain(f);
     }
+
+    pub fn len(&self) -> usize {
+        self.elements.keys().len()
+    }
 }
 
 #[cfg(test)]

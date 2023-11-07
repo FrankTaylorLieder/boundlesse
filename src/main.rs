@@ -1,4 +1,5 @@
 use ggez::glam::*;
+use ggez::graphics::PxScale;
 use ggez::input::keyboard::KeyCode;
 use ggez::input::keyboard::KeyInput;
 use ggez::{
@@ -8,6 +9,7 @@ use ggez::{
     mint::Point2,
     Context, ContextBuilder, GameError, GameResult,
 };
+use log::*;
 
 mod grid;
 use grid::{GridCoord, SparseGrid};
@@ -35,6 +37,11 @@ struct State {
     show_grid: bool,
     fps: u32,
     running: bool,
+    generation: u32,
+    show_header: bool,
+    actual_fps: f64,
+    dirty: bool,
+    cell_count: usize,
 }
 
 impl State {
@@ -45,6 +52,11 @@ impl State {
             show_grid: true,
             fps: 1,
             running: false,
+            generation: 0,
+            show_header: true,
+            actual_fps: 0.0,
+            dirty: true,
+            cell_count: 0,
         }
     }
 
@@ -67,13 +79,25 @@ impl State {
 
 impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
+        debug!("Update called");
         while ctx.time.check_update_time(self.fps) && self.running {
+            debug!("Update accepted...");
+
+            self.generation += 1;
+            let mut cell_count: usize = 0;
             let mut next = SparseGrid::new();
             for c in self.grid.elements() {
                 next.tally(&c.expand());
+                cell_count += 1;
             }
 
             next.retain(|gc, v| *v == 3 || (*v == 4 && self.grid.is_alive(gc)));
+
+            // Note: this is the previous generation cell count... but should be good enough.
+            //       To get this generation, we'd need a O(capacity) operation to count the retained keys.
+            self.cell_count = cell_count;
+            self.actual_fps = ctx.time.fps();
+            self.dirty = true;
 
             self.grid = next;
         }
@@ -82,6 +106,14 @@ impl EventHandler<GameError> for State {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        debug!("Draw called");
+        if !self.dirty {
+            return Ok(());
+        }
+
+        debug!("Dirty state to draw...");
+        self.dirty = false;
+
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
 
         if self.show_grid {
@@ -143,11 +175,17 @@ impl EventHandler<GameError> for State {
             }
         }
 
-        let text = Text::new(self.fps.to_string());
-        canvas.draw(
-            &text,
-            graphics::DrawParam::from(Point2 { x: 0.0, y: 2.0 }).color(TEXT_COLOR),
-        );
+        if self.show_header {
+            let mut text = Text::new(format!(
+                "FPS: {}, Generation: {}, Cells: {}",
+                self.fps, self.generation, self.cell_count
+            ));
+            text.set_scale(PxScale::from(50.0));
+            canvas.draw(
+                &text,
+                graphics::DrawParam::from(Point2 { x: 0.0, y: 2.0 }).color(TEXT_COLOR),
+            );
+        }
 
         canvas.finish(ctx)?;
 
@@ -179,9 +217,13 @@ impl EventHandler<GameError> for State {
             }
             if keycode == KeyCode::Delete {
                 self.grid = SparseGrid::new();
+                self.generation = 0;
             }
             if keycode == KeyCode::G {
                 self.show_grid = !self.show_grid;
+            }
+            if keycode == KeyCode::H {
+                self.show_header = !self.show_header;
             }
         }
 
@@ -189,8 +231,12 @@ impl EventHandler<GameError> for State {
     }
 }
 
+// Note: .env -> RUST_LOG=rusty_life=debug
 fn main() -> GameResult {
-    let (mut ctx, event_loop) = ContextBuilder::new("Conway's Game of Life", "mathletedev")
+    dotenv::dotenv().ok();
+    env_logger::init_from_env(env_logger::Env::default());
+
+    let (mut ctx, event_loop) = ContextBuilder::new("Rusty Life", "Frank Taylor")
         .window_mode(WindowMode::default().dimensions(WINDOW_SIZE.0, WINDOW_SIZE.1))
         .build()?;
 
