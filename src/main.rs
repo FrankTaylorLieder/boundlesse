@@ -114,21 +114,18 @@ impl State {
     }
 
     #[allow(unused)]
-    pub fn rand(ctx: &mut Context) -> Self {
-        let mut s = State::new(ctx);
-        let view_size = s.view_params.view_size;
-        let grid_size = s.view_params.grid_size;
-        let off_x = (view_size.0 - grid_size.0) / 2;
-        let off_y = (view_size.1 - grid_size.1) / 2;
+    pub fn seed_rand(&mut self) {
+        let view_size = self.view_params.view_size;
+        let grid_size = self.view_params.grid_size;
+        let off_x = ((view_size.0 - grid_size.0) / 2) - self.view_params.xt;
+        let off_y = ((view_size.1 - grid_size.1) / 2) - self.view_params.yt;
         for x in off_x..(grid_size.0 + off_x) {
             for y in off_y..(grid_size.1 + off_y) {
                 if rand::random() {
-                    s.grid.set(GridCoord::Valid(x as i64, y as i64), 1);
+                    self.grid.set(GridCoord::Valid(x as i64, y as i64), 1);
                 }
             }
         }
-
-        s
     }
 }
 
@@ -320,6 +317,10 @@ impl EventHandler<GameError> for State {
                 self.view_params.resize_zoom();
             }
 
+            if keycode == KeyCode::R {
+                self.seed_rand();
+            }
+
             self.dirty = true;
         }
 
@@ -352,7 +353,9 @@ fn main() -> GameResult {
         )
         .build()?;
 
-    let mut state = State::rand(&mut ctx);
+    let mut state = State::new(&mut ctx);
+    state.seed_rand();
+
     state.running = true;
 
     event::run(ctx, event_loop, state);

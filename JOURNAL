@@ -76,6 +76,10 @@ Commit: 542def0
 
   - Any keypress makes the model dirty to cause a re-render.
 
+Commit: b189174
+
+  - Re-seed the space with random data.
+
 Commit: 
 
   - TODO Prevent a new SparseGrid from being created by enabling red/green values in the grid.
