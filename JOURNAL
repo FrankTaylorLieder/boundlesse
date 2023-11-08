@@ -80,12 +80,28 @@ Commit: b189174
 
   - Re-seed the space with random data.
 
+Commit: c940d06
+
+  - TODO Implement load/save
+    - https://conwaylife.com/wiki/Run_Length_Encoded
+      - Format:
+        - Comment lines: #
+        - Header: x=X, y=Y
+          - Size of the overall pattern
+        - Data line: ([N][bo])*$
+        - Final line terminates with '!' instead of '$'
+    - Building a separate RLE parser, which main can call and insert the data into the grid.
+      - Partial implementation...
+
+
 Commit: 
+
+
+
 
   - TODO Prevent a new SparseGrid from being created by enabling red/green values in the grid.
   - TODO Only return elements in the current view
   - TODO Reinstate the mouse to draw
-  - TODO Implement load/save
   - TODO Parallelise the update function?
   - TODO Convert grid.elements() to an iterator
   - TODO Overview - showing where there are active cells across the entire space.

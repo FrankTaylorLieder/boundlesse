@@ -13,6 +13,8 @@ use log::*;
 mod grid;
 use grid::{GridCoord, SparseGrid};
 
+mod rle;
+
 const DEFAULT_WINDOW_SIZE: (f32, f32) = (2000.0, 1500.0);
 
 #[derive(Debug)]
@@ -127,6 +129,10 @@ impl State {
             }
         }
     }
+
+    pub fn load_rte(&mut self, filename: &str) -> GameResult {
+        todo!()
+    }
 }
 
 impl EventHandler<GameError> for State {
@@ -233,7 +239,8 @@ impl EventHandler<GameError> for State {
 
         if self.show_header {
             let mut text = Text::new(format!(
-                "FPS: {}, Pan: ({},{}), Cell size: {}, Generation: {}, Cells: {}",
+                "{}, FPS: {}, Pan: ({},{}), Cell size: {}, Generation: {}, Cells: {}",
+                if self.running { "Running" } else { "Stopped" },
                 self.fps,
                 self.view_params.xt,
                 self.view_params.yt,
@@ -354,9 +361,7 @@ fn main() -> GameResult {
         .build()?;
 
     let mut state = State::new(&mut ctx);
-    state.seed_rand();
-
-    state.running = true;
+    state.running = false;
 
     event::run(ctx, event_loop, state);
 }
