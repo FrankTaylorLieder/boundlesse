@@ -8,7 +8,7 @@ pub enum GridCoord {
 
 impl GridCoord {
     pub fn adjust(&self, a: i64, b: i64) -> GridCoord {
-        // Implement OutOfBounds
+        // TODO Implement OutOfBounds
 
         if let GridCoord::Valid(x, y) = self {
             GridCoord::Valid(x + a, y + b)

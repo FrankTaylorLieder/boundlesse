@@ -40,17 +40,14 @@ impl ViewParams {
         self.xt += view_deltas.0 / 2;
         self.yt += view_deltas.1 / 2;
     }
+
     fn resize_window(&mut self, x: f32, y: f32) {
         self.window_size = (x, y);
         self.resize_aux();
     }
+
     fn resize_zoom(&mut self) {
         self.resize_aux();
-    }
-
-    fn center(&mut self) {
-        self.xt = self.grid_size.0 / 2;
-        self.yt = self.grid_size.1 / 2;
     }
 }
 
@@ -137,9 +134,9 @@ impl State {
 
 impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        //debug!("Update called");
+        //debug!("called");
         while ctx.time.check_update_time(self.fps) && self.running {
-            debug!("Update accepted...");
+            //debug!("Update accepted...");
 
             self.generation += 1;
             let mut cell_count: usize = 0;
@@ -303,7 +300,6 @@ impl EventHandler<GameError> for State {
             if keycode == KeyCode::C {
                 self.view_params.xt = 0;
                 self.view_params.yt = 0;
-                // self.view_params.center();
             }
             if keycode == KeyCode::Delete || keycode == KeyCode::Back {
                 self.grid = SparseGrid::new();
@@ -323,6 +319,8 @@ impl EventHandler<GameError> for State {
                 self.view_params.cell_size += 1.0;
                 self.view_params.resize_zoom();
             }
+
+            self.dirty = true;
         }
 
         Ok(())

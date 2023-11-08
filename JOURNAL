@@ -72,10 +72,16 @@ Commit: 74c4959
     - Implement zoom simply by changing the cell size
     - Change the pan to keep the current view center in the center.
 
+Commit: 542def0
 
+  - Any keypress makes the model dirty to cause a re-render.
+
+Commit: 
+
+  - TODO Prevent a new SparseGrid from being created by enabling red/green values in the grid.
   - TODO Only return elements in the current view
-  - TODO Implement zooming
   - TODO Reinstate the mouse to draw
   - TODO Implement load/save
-  - TODO Parallelise the update function
+  - TODO Parallelise the update function?
   - TODO Convert grid.elements() to an iterator
+  - TODO Overview - showing where there are active cells across the entire space.
