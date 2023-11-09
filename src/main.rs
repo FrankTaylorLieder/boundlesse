@@ -9,6 +9,7 @@ use ggez::{
     Context, ContextBuilder, GameError, GameResult,
 };
 use log::*;
+use std::env;
 
 mod grid;
 use grid::{GridCoord, SparseGrid};
@@ -264,7 +265,7 @@ impl EventHandler<GameError> for State {
                 self.generation,
                 self.cell_count
             ));
-            text.set_scale(PxScale::from(50.0));
+            text.set_scale(PxScale::from(40.0));
             canvas.draw(
                 &text,
                 graphics::DrawParam::from(Point2 { x: 0.0, y: 2.0 }).color(TEXT_COLOR),
@@ -368,6 +369,10 @@ fn main() -> GameResult {
     dotenv::dotenv().ok();
     env_logger::init_from_env(env_logger::Env::default());
 
+    info!("Starting rusty-life...");
+
+    let args: Vec<String> = env::args().collect();
+
     let (mut ctx, event_loop) = ContextBuilder::new("Rusty Life", "Frank Taylor")
         .window_mode(
             WindowMode::default()
@@ -377,8 +382,11 @@ fn main() -> GameResult {
         .build()?;
 
     let mut state = State::new(&mut ctx);
-    state.load_rle("patterns/p72lumpsofmuckhassler7.rle")?;
-    //state.load_rle("patterns/glider.rle")?;
+    if args.len() > 1 {
+        info!("Loading pattern: {}", args[1]);
+        state.load_rle(args[1].as_str())?;
+    }
+
     state.running = false;
 
     event::run(ctx, event_loop, state);

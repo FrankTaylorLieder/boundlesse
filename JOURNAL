@@ -91,14 +91,15 @@ Commit: c940d06
         - Data line: ([N][bo])*$
         - Final line terminates with '!' instead of '$'
     - Building a separate RLE parser, which main can call and insert the data into the grid.
-      - Partial implementation...
+    - Patch the RLE into the grid
+
+Commit: e99b370
+
+  - Pass pattern file on command line
 
 
-Commit: 
 
-
-
-
+  - TODO Build a file selector for loading.
   - TODO Prevent a new SparseGrid from being created by enabling red/green values in the grid.
   - TODO Only return elements in the current view
   - TODO Reinstate the mouse to draw
