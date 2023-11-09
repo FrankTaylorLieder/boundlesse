@@ -12,6 +12,7 @@ use log::*;
 
 mod grid;
 use grid::{GridCoord, SparseGrid};
+use rle::load_rle;
 
 mod rle;
 
@@ -115,6 +116,24 @@ impl State {
         }
     }
 
+    fn inject_data(&mut self, data: Vec<Vec<bool>>) -> GameResult {
+        let view_size = self.view_params.view_size;
+        let data_x = data[0].len() as i64;
+        let data_y = data.len() as i64;
+
+        let off_x = ((view_size.0 - data_x) / 2) - self.view_params.xt;
+        let off_y = ((view_size.1 - data_y) / 2) - self.view_params.yt;
+        for y in 0..data_y {
+            for x in 0..data_x {
+                if data[y as usize][x as usize] {
+                    self.grid.set(GridCoord::Valid(x + off_x, y + off_y), 1);
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     #[allow(unused)]
     pub fn seed_rand(&mut self) {
         let view_size = self.view_params.view_size;
@@ -130,17 +149,16 @@ impl State {
         }
     }
 
-    pub fn load_rte(&mut self, filename: &str) -> GameResult {
-        todo!()
+    pub fn load_rle(&mut self, filename: &str) -> GameResult {
+        let data = load_rle(filename).map_err(|e| GameError::CustomError(e.to_string()))?;
+
+        self.inject_data(data)
     }
 }
 
 impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        //debug!("called");
         while ctx.time.check_update_time(self.fps) && self.running {
-            //debug!("Update accepted...");
-
             self.generation += 1;
             let mut cell_count: usize = 0;
             let mut next = SparseGrid::new();
@@ -164,12 +182,10 @@ impl EventHandler<GameError> for State {
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        //debug!("Draw called");
         if !self.dirty {
             return Ok(());
         }
 
-        //debug!("Dirty state to draw...");
         self.dirty = false;
 
         let mut canvas = graphics::Canvas::from_frame(ctx, BG_COLOR);
@@ -361,6 +377,8 @@ fn main() -> GameResult {
         .build()?;
 
     let mut state = State::new(&mut ctx);
+    state.load_rle("patterns/p72lumpsofmuckhassler7.rle")?;
+    //state.load_rle("patterns/glider.rle")?;
     state.running = false;
 
     event::run(ctx, event_loop, state);
