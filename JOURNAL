@@ -97,7 +97,7 @@ Commit: e99b370
 
   - Pass pattern file on command line
 
-
+Commit: 2d24020
 
   - TODO Build a file selector for loading.
   - TODO Prevent a new SparseGrid from being created by enabling red/green values in the grid.
