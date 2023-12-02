@@ -20,14 +20,6 @@ enum RLELine {
     Data(Vec<RLEToken>),
 }
 
-// fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-// where
-//     P: AsRef<Path>,
-// {
-//     let file = File::open(filename)?;
-//     Ok(io::BufReader::new(file).lines())
-// }
-
 fn read_lines(path: &str) -> Result<Vec<String>> {
     let input = File::open(path)?;
     let buffered = BufReader::new(input);

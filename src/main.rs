@@ -10,13 +10,20 @@ use ggez::{
 };
 use log::*;
 use std::env;
+use std::time::SystemTime;
 
 mod grid;
-use grid::{GridCoord, SparseGrid};
+use grid::{GridCoord, SparseGrid, Universe};
 use rle::load_rle;
 
 mod rle;
 
+fn now() -> u128 {
+    let duration_since_epoch = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap();
+    duration_since_epoch.as_nanos() / 1000
+}
 const DEFAULT_WINDOW_SIZE: (f32, f32) = (2000.0, 1500.0);
 
 #[derive(Debug)]
@@ -89,11 +96,10 @@ const TEXT_COLOR: Color = Color::BLACK;
 
 struct State {
     view_params: ViewParams,
-    grid: SparseGrid,
+    universe: Universe,
     show_grid: bool,
     fps: u32,
     running: bool,
-    generation: u32,
     show_header: bool,
     actual_fps: f64,
     dirty: bool,
@@ -105,11 +111,10 @@ impl State {
     pub fn new(ctx: &mut Context) -> Self {
         State {
             view_params: ViewParams::default(),
-            grid: SparseGrid::new(),
+            universe: Universe::new(),
             show_grid: true,
             fps: 10,
             running: false,
-            generation: 0,
             show_header: true,
             actual_fps: 0.0,
             dirty: true,
@@ -127,7 +132,9 @@ impl State {
         for y in 0..data_y {
             for x in 0..data_x {
                 if data[y as usize][x as usize] {
-                    self.grid.set(GridCoord::Valid(x + off_x, y + off_y), 1);
+                    self.universe
+                        .grid
+                        .set(GridCoord::Valid(x + off_x, y + off_y), 1);
                 }
             }
         }
@@ -144,7 +151,9 @@ impl State {
         for x in off_x..(grid_size.0 + off_x) {
             for y in off_y..(grid_size.1 + off_y) {
                 if rand::random() {
-                    self.grid.set(GridCoord::Valid(x as i64, y as i64), 1);
+                    self.universe
+                        .grid
+                        .set(GridCoord::Valid(x as i64, y as i64), 1);
                 }
             }
         }
@@ -159,33 +168,39 @@ impl State {
 
 impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        while ctx.time.check_update_time(self.fps) && self.running {
-            self.generation += 1;
-            let mut cell_count: usize = 0;
-            let mut next = SparseGrid::new();
-            for c in self.grid.elements() {
-                next.tally(&c.expand());
-                cell_count += 1;
-            }
+        debug!("Update requested...");
+        let start = now();
+        // while ctx.time.check_update_time(self.fps) && self.running {
+        debug!("Update accepted...{}", self.universe.generation);
+        let us = now();
 
-            next.retain(|gc, v| *v == 3 || (*v == 4 && self.grid.is_alive(gc)));
+        let cell_count = self.universe.update();
 
-            // Note: this is the previous generation cell count... but should be good enough.
-            //       To get this generation, we'd need a O(capacity) operation to count the retained keys.
-            self.cell_count = cell_count;
-            self.actual_fps = ctx.time.fps();
-            self.dirty = true;
+        // Note: this is the previous generation cell count... but should be good enough.
+        //       To get this generation, we'd need a O(capacity) operation to count the retained keys.
+        self.cell_count = cell_count;
+        self.actual_fps = ctx.time.fps();
+        self.dirty = true;
 
-            self.grid = next;
-        }
+        let ds = now() - us;
+        debug!("Internal update done: {ds}");
+        // }
 
+        let duration = now() - start;
+        debug!("Update done: {duration} - {}", self.cell_count);
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        debug!("Draw requested...");
         if !self.dirty {
+            debug!("Draw rejected");
             return Ok(());
         }
+
+        debug!("Draw dirty...");
+
+        let start = now();
 
         self.dirty = false;
 
@@ -233,7 +248,7 @@ impl EventHandler<GameError> for State {
             }
         }
 
-        for gc in self.grid.elements() {
+        for gc in self.universe.grid.elements() {
             if let GridCoord::Valid(x, y) = gc {
                 let x = x + self.view_params.xt;
                 let y = y + self.view_params.yt;
@@ -262,7 +277,7 @@ impl EventHandler<GameError> for State {
                 self.view_params.xt,
                 self.view_params.yt,
                 self.view_params.cell_size,
-                self.generation,
+                self.universe.generation,
                 self.cell_count
             ));
             text.set_scale(PxScale::from(40.0));
@@ -273,6 +288,9 @@ impl EventHandler<GameError> for State {
         }
 
         canvas.finish(ctx)?;
+
+        let duration = now() - start;
+        debug!("Draw done: {duration}");
 
         Ok(())
     }
@@ -323,8 +341,8 @@ impl EventHandler<GameError> for State {
                 self.view_params.yt = 0;
             }
             if keycode == KeyCode::Delete || keycode == KeyCode::Back {
-                self.grid = SparseGrid::new();
-                self.generation = 0;
+                self.universe.grid = SparseGrid::new();
+                self.universe.generation = 0;
             }
             if keycode == KeyCode::G {
                 self.show_grid = !self.show_grid;

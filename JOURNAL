@@ -98,7 +98,28 @@ Commit: e99b370
   - Pass pattern file on command line
 
 Commit: 2d24020
+Commit: 96cc0ac
 
+  - Performance analysis
+    - ISSUE: with just 2 block of rand, the application seems to grind to a halt.
+      - E.g it takes >2s to draw the screen. >2s to perform an update, which are then back to back without draws... so the app looks like its frozen.
+      - At 60fps we get 16ms to complete an update and draw wihout impacting the framerate... but we don't need this for Life... we can set the fps to the current generation/s with a ceiling of 60.
+        - We already do this...
+      - Instead, don't loop in the update call. Allowing a draw for each update.
+        - This improves things, but now our g/s is impacted by the draw rate.
+        - Update 100ms per 20k alive. 200 cells per ms
+        - Draw: 630ms per 20k alive. 31 cells per ms
+    - Build some benches to optimise the update.
+      - Start by moving the update code into the grid, so we can build benches outside the UI.
+    - Use Criterion to build benches for the grid/update.
+      - Benchmark the current implementation
+        - Using Criterion
+          - ISSUE: It does not appear to be running our code!
+      - Add an A/B implementation to remove the need for full map building.
+      - 
+
+  - TODO Formalise the grid API so we can enable different backend implementations.
+  - TODO Build a set of benches for different backend grid implementations.
   - TODO Build a file selector for loading.
   - TODO Prevent a new SparseGrid from being created by enabling red/green values in the grid.
   - TODO Only return elements in the current view
@@ -106,3 +127,4 @@ Commit: 2d24020
   - TODO Parallelise the update function?
   - TODO Convert grid.elements() to an iterator
   - TODO Overview - showing where there are active cells across the entire space.
+  

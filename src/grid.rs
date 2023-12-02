@@ -71,7 +71,7 @@ impl SparseGrid {
         self.elements.keys().map(|k| *k).collect()
     }
 
-    pub fn expand(&self) -> Vec<GridCoord> {
+    fn expand(&self) -> Vec<GridCoord> {
         let iter = self.elements.iter();
         let mut elements: Vec<GridCoord> = Vec::with_capacity(iter.len());
         for (&gc, _) in iter {
@@ -81,7 +81,7 @@ impl SparseGrid {
         elements
     }
 
-    pub fn tally(&mut self, cells: &[GridCoord]) {
+    fn tally(&mut self, cells: &[GridCoord]) {
         for c in cells {
             let count = match self.elements.get(&c) {
                 Some(&v) => v + 1,
@@ -92,7 +92,7 @@ impl SparseGrid {
         }
     }
 
-    pub fn retain<F>(&mut self, f: F)
+    fn retain<F>(&mut self, f: F)
     where
         F: FnMut(&GridCoord, &mut usize) -> bool,
     {
@@ -101,6 +101,35 @@ impl SparseGrid {
 
     pub fn len(&self) -> usize {
         self.elements.keys().len()
+    }
+}
+
+pub struct Universe {
+    pub grid: SparseGrid,
+    pub generation: usize,
+}
+
+#[allow(unused)]
+impl Universe {
+    pub fn new() -> Universe {
+        Universe {
+            grid: SparseGrid::new(),
+            generation: 0,
+        }
+    }
+
+    pub fn update(&mut self) -> usize {
+        self.generation += 1;
+        let mut cell_count: usize = 0;
+        let mut next = SparseGrid::new();
+        for c in self.grid.elements() {
+            next.tally(&c.expand());
+            cell_count += 1;
+        }
+
+        next.retain(|gc, v| *v == 3 || (*v == 4 && self.grid.is_alive(gc)));
+
+        cell_count
     }
 }
 
