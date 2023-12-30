@@ -16,16 +16,15 @@ fn run_r(size: usize, generations: usize) {
         }
     }
 
-    let mut total: u64 = 0;
+    let mut _total: u64 = 0;
     for _ in 0..generations {
-        total += universe.update() as u64;
+        _total += universe.update() as u64;
     }
 
-    println!("After {generations}: {total} cells lived");
+    //println!("After {generations}: {_total} cells lived");
 }
 
 pub fn grid_bench(c: &mut Criterion) {
-    println!("Hello");
     c.bench_function("100R", |b| b.iter(|| run_r(black_box(100), black_box(10))));
 }
 
