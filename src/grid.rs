@@ -135,6 +135,158 @@ impl Universe {
     }
 }
 
+#[derive(Debug)]
+struct Cell {
+    is_alive: bool,
+    generation: usize,
+    tally: usize,
+}
+
+#[derive(Debug)]
+pub struct SparseGridAB {
+    elements: HashMap<GridCoord, Cell>,
+    generation: usize,
+}
+
+#[allow(unused)]
+impl SparseGridAB {
+    pub fn new() -> Self {
+        SparseGridAB {
+            elements: HashMap::new(),
+            generation: 0,
+        }
+    }
+
+    pub fn set(&mut self, k: GridCoord) {
+        self.elements.insert(
+            k,
+            Cell {
+                is_alive: true,
+                generation: self.generation,
+                tally: 0,
+            },
+        );
+    }
+
+    pub fn unset(&mut self, k: GridCoord) {
+        // TODO Do we need to optimise this too to remember recently removed cells?
+        self.elements.remove(&k);
+    }
+
+    // pub fn get(&self, k: &GridCoord) -> Option<usize> {
+    //     match self.elements.get(k) {
+    //         Some(v) => Some(v.tally),
+    //         None => None,
+    //     }
+    // }
+
+    pub fn is_alive(&self, k: &GridCoord) -> bool {
+        match self.elements.get(k) {
+            Some(v) => v.is_alive,
+            None => false,
+        }
+    }
+
+    pub fn live_cells(&self) -> Vec<GridCoord> {
+        self.elements
+            .iter()
+            .filter(|&(k, v)| v.is_alive)
+            .map(|(k, _)| *k)
+            .collect()
+    }
+
+    // fn expand(&self) -> Vec<GridCoord> {
+    //     let iter = self.elements.iter();
+    //     let mut elements: Vec<GridCoord> = Vec::with_capacity(iter.len());
+    //     for (&gc, _) in iter {
+    //         elements.push(gc);
+    //     }
+    //
+    //     elements
+    // }
+
+    // Tally for gen+1
+    fn tally(&mut self, generation: usize, cells: &[GridCoord]) {
+        for c in cells {
+            match self.elements.get_mut(&c) {
+                Some(v) => {
+                    if v.generation < generation {
+                        v.generation = generation;
+                        v.tally = 1;
+                    } else {
+                        v.tally += 1;
+                    }
+                }
+                None => {
+                    self.elements.insert(
+                        *c,
+                        Cell {
+                            is_alive: false,
+                            generation,
+                            tally: 1,
+                        },
+                    );
+                }
+            };
+        }
+    }
+
+    // Complete the generation...
+    fn finalise(&mut self, generation: usize) {
+        self.elements.retain(|k, v| {
+            // Firstly... adjust the cells to the correct life
+            if v.generation < generation {
+                // This cell has no neighbours... so will die
+                v.is_alive = false;
+            } else {
+                // This cell has some neighbours, so might live.
+                let t = v.tally;
+                v.is_alive = t == 3 || (t == 4 && v.is_alive);
+            }
+
+            //println!("Finalise: {:?} => {:?}", k, v);
+
+            // Discard cells which had no neighbours
+            v.generation == generation
+        });
+    }
+
+    // pub fn len(&self) -> usize {
+    //     self.elements.keys().len()
+    // }
+}
+
+pub struct UniverseAB {
+    pub grid: SparseGridAB,
+    pub generation: usize,
+}
+
+#[allow(unused)]
+impl UniverseAB {
+    pub fn new() -> Self {
+        UniverseAB {
+            grid: SparseGridAB::new(),
+            generation: 0,
+        }
+    }
+
+    pub fn update(&mut self) -> usize {
+        self.generation += 1;
+        let mut cell_count: usize = 0;
+        for c in self.grid.live_cells() {
+            //println!("Cell: {:?}", c);
+            self.grid.tally(self.generation, &c.expand());
+            cell_count += 1;
+        }
+
+        // println!("Tallied: {:?}", self.grid);
+
+        self.grid.finalise(self.generation);
+
+        cell_count
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::assert_eq;
@@ -144,6 +296,10 @@ mod tests {
     const V: usize = 42;
     const K1: GridCoord = GridCoord::Valid(0, 0);
     const K2: GridCoord = GridCoord::Valid(0, 1);
+    const K3: GridCoord = GridCoord::Valid(0, 2);
+
+    const K4: GridCoord = GridCoord::Valid(-1, 1);
+    const K5: GridCoord = GridCoord::Valid(1, 1);
 
     #[test]
     fn test_adjust() {
@@ -160,7 +316,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_set() {
+    fn test_get_set_orig() {
         let mut g: SparseGrid = SparseGrid::new();
 
         assert_eq!(g.get(&K1), None);
@@ -172,7 +328,19 @@ mod tests {
     }
 
     #[test]
-    fn test_retain() {
+    fn test_get_set_ab() {
+        let mut g: SparseGridAB = SparseGridAB::new();
+
+        assert_eq!(g.is_alive(&K1), false);
+
+        g.set(K1);
+
+        assert_eq!(g.is_alive(&K1), true);
+        assert_eq!(g.is_alive(&K2), false);
+    }
+
+    #[test]
+    fn test_retain_orig() {
         let mut g = SparseGrid::new();
 
         g.set(K1, 1);
@@ -188,7 +356,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tally() {
+    fn test_tally_orig() {
         let mut g = SparseGrid::new();
 
         g.tally(&[K1, K2]);
@@ -196,5 +364,28 @@ mod tests {
 
         assert_eq!(g.get(&K1), Some(1));
         assert_eq!(g.get(&K2), Some(2));
+    }
+
+    #[test]
+    fn test_blinker_ab() {
+        let mut universe = UniverseAB::new();
+
+        universe.grid.set(K1);
+        universe.grid.set(K2);
+        universe.grid.set(K3);
+
+        println!("Grid: {:?}", universe.grid);
+
+        let c = universe.update();
+
+        println!("Update: {:?}", universe.grid);
+
+        assert_eq!(c, 3);
+
+        assert_eq!(universe.grid.is_alive(&K1), false);
+        assert_eq!(universe.grid.is_alive(&K2), true);
+        assert_eq!(universe.grid.is_alive(&K3), false);
+        assert_eq!(universe.grid.is_alive(&K4), true);
+        assert_eq!(universe.grid.is_alive(&K5), true);
     }
 }

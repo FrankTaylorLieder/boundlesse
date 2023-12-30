@@ -13,7 +13,7 @@ use std::env;
 use std::time::SystemTime;
 
 mod grid;
-use grid::{GridCoord, SparseGrid, Universe};
+use grid::{GridCoord, UniverseAB};
 use rle::load_rle;
 
 mod rle;
@@ -96,7 +96,7 @@ const TEXT_COLOR: Color = Color::BLACK;
 
 struct State {
     view_params: ViewParams,
-    universe: Universe,
+    universe: UniverseAB,
     show_grid: bool,
     fps: u32,
     running: bool,
@@ -111,7 +111,7 @@ impl State {
     pub fn new(ctx: &mut Context) -> Self {
         State {
             view_params: ViewParams::default(),
-            universe: Universe::new(),
+            universe: UniverseAB::new(),
             show_grid: true,
             fps: 10,
             running: false,
@@ -134,7 +134,7 @@ impl State {
                 if data[y as usize][x as usize] {
                     self.universe
                         .grid
-                        .set(GridCoord::Valid(x + off_x, y + off_y), 1);
+                        .set(GridCoord::Valid(x + off_x, y + off_y));
                 }
             }
         }
@@ -151,9 +151,7 @@ impl State {
         for x in off_x..(grid_size.0 + off_x) {
             for y in off_y..(grid_size.1 + off_y) {
                 if rand::random() {
-                    self.universe
-                        .grid
-                        .set(GridCoord::Valid(x as i64, y as i64), 1);
+                    self.universe.grid.set(GridCoord::Valid(x as i64, y as i64));
                 }
             }
         }
@@ -170,21 +168,22 @@ impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         debug!("Update requested...");
         let start = now();
-        // while ctx.time.check_update_time(self.fps) && self.running {
-        debug!("Update accepted...{}", self.universe.generation);
-        let us = now();
+        while ctx.time.check_update_time(self.fps) && self.running {
+            //if self.running {
+            debug!("Update accepted...{}", self.universe.generation);
+            let us = now();
 
-        let cell_count = self.universe.update();
+            let cell_count = self.universe.update();
 
-        // Note: this is the previous generation cell count... but should be good enough.
-        //       To get this generation, we'd need a O(capacity) operation to count the retained keys.
-        self.cell_count = cell_count;
-        self.actual_fps = ctx.time.fps();
-        self.dirty = true;
+            // Note: this is the previous generation cell count... but should be good enough.
+            //       To get this generation, we'd need a O(capacity) operation to count the retained keys.
+            self.cell_count = cell_count;
+            self.actual_fps = ctx.time.fps();
+            self.dirty = true;
 
-        let ds = now() - us;
-        debug!("Internal update done: {ds}");
-        // }
+            let ds = now() - us;
+            debug!("Internal update done: {ds}");
+        }
 
         let duration = now() - start;
         debug!("Update done: {duration} - {}", self.cell_count);
@@ -248,7 +247,7 @@ impl EventHandler<GameError> for State {
             }
         }
 
-        for gc in self.universe.grid.elements() {
+        for gc in self.universe.grid.live_cells() {
             if let GridCoord::Valid(x, y) = gc {
                 let x = x + self.view_params.xt;
                 let y = y + self.view_params.yt;
@@ -341,8 +340,7 @@ impl EventHandler<GameError> for State {
                 self.view_params.yt = 0;
             }
             if keycode == KeyCode::Delete || keycode == KeyCode::Back {
-                self.universe.grid = SparseGrid::new();
-                self.universe.generation = 0;
+                self.universe = UniverseAB::new();
             }
             if keycode == KeyCode::G {
                 self.show_grid = !self.show_grid;

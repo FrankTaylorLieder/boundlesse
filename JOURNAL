@@ -118,10 +118,14 @@ Commit: 96cc0ac
             - Not sure what was wrong... it seems to the working OK.
             - Build test to create a 100x100 pattern and run 10 generations.
 
-Commit: 
+Commit: 634f8e8
 
-      - Add an A/B implementation to remove the need for full map building.
-      - 
+    - Added UniverseAB implementation that updates existing Universe/grid in place to avoid full rebuild
+      - Added bench
+        - This shows a 3x speed increase!
+      - TODO The code is very messy... need to refactor to enable both Universes to be interchanged.
+
+    - TODO look at the game loop to work out how to update better. Avoid busy looping.
 
   - TODO Formalise the grid API so we can enable different backend implementations.
   - TODO Build a set of benches for different backend grid implementations.
