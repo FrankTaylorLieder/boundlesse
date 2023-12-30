@@ -126,11 +126,10 @@ Commit: 634f8e8
       - TODO The code is very messy... need to refactor to enable both Universes to be interchanged.
 
     - TODO look at the game loop to work out how to update better. Avoid busy looping.
+    - TODO UI locks up when too much is on the screen (4xR)
 
   - TODO Formalise the grid API so we can enable different backend implementations.
-  - TODO Build a set of benches for different backend grid implementations.
   - TODO Build a file selector for loading.
-  - TODO Prevent a new SparseGrid from being created by enabling red/green values in the grid.
   - TODO Only return elements in the current view
   - TODO Reinstate the mouse to draw
   - TODO Parallelise the update function?
