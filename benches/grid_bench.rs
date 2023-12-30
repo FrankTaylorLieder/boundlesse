@@ -1,15 +1,32 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rusty_life::grid;
 
-fn run_r(size: usize) {
-    let mut grid = grid::SparseGrid::new();
+fn run_r(size: usize, generations: usize) {
+    let mut universe = grid::Universe::new();
 
-    // TODO initialize the grid with a known pattern. Iterate the grid for N generations.
+    let mut ab = true;
+    for x in 0..size {
+        for y in 0..size {
+            if ab {
+                universe
+                    .grid
+                    .set(grid::GridCoord::Valid(x as i64, y as i64), 1);
+            }
+            ab = !ab;
+        }
+    }
+
+    let mut total: u64 = 0;
+    for _ in 0..generations {
+        total += universe.update() as u64;
+    }
+
+    println!("After {generations}: {total} cells lived");
 }
 
 pub fn grid_bench(c: &mut Criterion) {
     println!("Hello");
-    c.bench_function("100R", |b| b.iter(|| run_r(black_box(100))));
+    c.bench_function("100R", |b| b.iter(|| run_r(black_box(100), black_box(10))));
 }
 
 criterion_group!(benches, grid_bench);

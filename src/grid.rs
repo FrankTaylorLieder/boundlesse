@@ -129,6 +129,8 @@ impl Universe {
 
         next.retain(|gc, v| *v == 3 || (*v == 4 && self.grid.is_alive(gc)));
 
+        self.grid = next;
+
         cell_count
     }
 }

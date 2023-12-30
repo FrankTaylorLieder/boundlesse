@@ -114,7 +114,12 @@ Commit: 96cc0ac
     - Use Criterion to build benches for the grid/update.
       - Benchmark the current implementation
         - Using Criterion
-          - ISSUE: It does not appear to be running our code!
+          - SOLVED: It does not appear to be running our code!
+            - Not sure what was wrong... it seems to the working OK.
+            - Build test to create a 100x100 pattern and run 10 generations.
+
+Commit: 
+
       - Add an A/B implementation to remove the need for full map building.
       - 
 
