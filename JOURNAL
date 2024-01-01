@@ -123,10 +123,21 @@ Commit: 634f8e8
     - Added UniverseAB implementation that updates existing Universe/grid in place to avoid full rebuild
       - Added bench
         - This shows a 3x speed increase!
+
+Commit: 97e6c72
+Commit: 2c88c1d
+
       - TODO The code is very messy... need to refactor to enable both Universes to be interchanged.
 
+  - UI locks up when too much is on the screen (4xR)
+    - Created a simple repro showing locking up at 50k rects. Locks up during canvas.finish() operation.
+    - Putting a message on the Discord.
+      - Gist: https://gist.github.com/FrankTaylorLieder/c12fdad7977e4852d5a6d92100daedff
+      - Got a response... Using Mesh is wrong... this creates a GPU object.
+        - Instead you can use Quad which reuses a Mesh to draw different rects.
+    - Replaced the Meshes with Quads... things run a lot faster now! And no lock ups!
+
     - TODO look at the game loop to work out how to update better. Avoid busy looping.
-    - TODO UI locks up when too much is on the screen (4xR)
 
   - TODO Formalise the grid API so we can enable different backend implementations.
   - TODO Build a file selector for loading.

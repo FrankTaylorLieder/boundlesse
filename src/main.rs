@@ -4,7 +4,7 @@ use ggez::input::keyboard::{KeyCode, KeyInput, KeyMods};
 use ggez::{
     conf::WindowMode,
     event::{self, EventHandler},
-    graphics::{self, Color, DrawMode, Mesh, Rect, Text},
+    graphics::{self, Color, DrawParam, Quad, Text},
     mint::Point2,
     Context, ContextBuilder, GameError, GameResult,
 };
@@ -209,44 +209,27 @@ impl EventHandler<GameError> for State {
 
         if self.show_grid {
             for i in 0..view_params.view_size.0 as usize {
-                let line = Mesh::new_line(
-                    ctx,
-                    &vec![
-                        Point2 {
-                            x: i as f32 * view_params.cell_size,
-                            y: 0.0,
-                        },
-                        Point2 {
-                            x: i as f32 * view_params.cell_size,
-                            y: view_params.window_size.1,
-                        },
-                    ],
-                    view_params.line_width,
-                    LINE_COLOR,
-                )?;
-                canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+                canvas.draw(
+                    &Quad,
+                    DrawParam::default()
+                        .color(LINE_COLOR)
+                        .scale([view_params.line_width, view_params.window_size.1])
+                        .dest([i as f32 * view_params.cell_size, 0.0]),
+                );
             }
 
             for j in 0..view_params.view_size.1 as usize {
-                let line = Mesh::new_line(
-                    ctx,
-                    &vec![
-                        Point2 {
-                            x: 0.0,
-                            y: j as f32 * view_params.cell_size,
-                        },
-                        Point2 {
-                            x: view_params.window_size.0,
-                            y: j as f32 * view_params.cell_size,
-                        },
-                    ],
-                    view_params.line_width,
-                    LINE_COLOR,
-                )?;
-                canvas.draw(&line, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+                canvas.draw(
+                    &Quad,
+                    DrawParam::default()
+                        .color(LINE_COLOR)
+                        .scale([view_params.window_size.0, view_params.line_width])
+                        .dest([0.0, j as f32 * view_params.cell_size]),
+                );
             }
         }
 
+        let mut live = 0;
         for gc in self.universe.grid.live_cells() {
             if let GridCoord::Valid(x, y) = gc {
                 let x = x + self.view_params.xt;
@@ -256,17 +239,20 @@ impl EventHandler<GameError> for State {
                     && y >= 0
                     && y < view_params.view_size.1 as i64
                 {
+                    live += 1;
                     let cs = view_params.cell_size;
-                    let rect = Mesh::new_rectangle(
-                        ctx,
-                        DrawMode::fill(),
-                        Rect::new(x as f32 * cs, y as f32 * cs, cs, cs),
-                        CELL_COLOR,
-                    )?;
-                    canvas.draw(&rect, graphics::DrawParam::from(Point2 { x: 0.0, y: 0.0 }));
+                    canvas.draw(
+                        &Quad,
+                        DrawParam::default()
+                            .color(CELL_COLOR)
+                            .scale([cs, cs])
+                            .dest([x as f32 * cs, y as f32 * cs]),
+                    );
                 }
             }
         }
+
+        debug!("Draw finished: {} took {}", live, now() - start);
 
         if self.show_header {
             let mut text = Text::new(format!(
