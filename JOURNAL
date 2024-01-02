@@ -137,8 +137,14 @@ Commit: 2c88c1d
         - Instead you can use Quad which reuses a Mesh to draw different rects.
     - Replaced the Meshes with Quads... things run a lot faster now! And no lock ups!
 
-    - TODO look at the game loop to work out how to update better. Avoid busy looping.
+Commit: c93a0f5
 
+  - Following another comment on Discord, replaced Quads with a MeshBuilder.
+    - This seems to work even faster...but I need to properly test it.
+    - TODO
+
+  - TODO look at the game loop to work out how to update better. Avoid busy looping.
+  - TODO Can we further optimise the grid implementation... play with different numbers of dead generations in the current AB implementation. (Maybe rename it too!)
   - TODO Formalise the grid API so we can enable different backend implementations.
   - TODO Build a file selector for loading.
   - TODO Only return elements in the current view
@@ -146,4 +152,5 @@ Commit: 2c88c1d
   - TODO Parallelise the update function?
   - TODO Convert grid.elements() to an iterator
   - TODO Overview - showing where there are active cells across the entire space.
+  - TODO Maybe a Meshbuilder instead of Quads will be quicker?
   

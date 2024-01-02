@@ -1,10 +1,11 @@
+#[allow(unused_imports)]
 use ggez::glam::*;
-use ggez::graphics::PxScale;
+use ggez::graphics::{MeshBuilder, PxScale};
 use ggez::input::keyboard::{KeyCode, KeyInput, KeyMods};
 use ggez::{
     conf::WindowMode,
     event::{self, EventHandler},
-    graphics::{self, Color, DrawParam, Quad, Text},
+    graphics::{self, Color, DrawMode, DrawParam, Mesh, Quad, Rect, Text},
     mint::Point2,
     Context, ContextBuilder, GameError, GameResult,
 };
@@ -208,28 +209,51 @@ impl EventHandler<GameError> for State {
         let view_params = &self.view_params;
 
         if self.show_grid {
+            let mut lb = MeshBuilder::new();
             for i in 0..view_params.view_size.0 as usize {
-                canvas.draw(
-                    &Quad,
-                    DrawParam::default()
-                        .color(LINE_COLOR)
-                        .scale([view_params.line_width, view_params.window_size.1])
-                        .dest([i as f32 * view_params.cell_size, 0.0]),
-                );
+                lb.line(
+                    &[
+                        vec2(i as f32 * view_params.cell_size, 0.0),
+                        vec2(i as f32 * view_params.cell_size, view_params.window_size.1),
+                    ],
+                    1.0,
+                    LINE_COLOR,
+                )?;
+
+                // canvas.draw(
+                //     &Quad,
+                //     DrawParam::default()
+                //         .color(LINE_COLOR)
+                //         .scale([view_params.line_width, view_params.window_size.1])
+                //         .dest([i as f32 * view_params.cell_size, 0.0]),
+                // );
             }
 
             for j in 0..view_params.view_size.1 as usize {
-                canvas.draw(
-                    &Quad,
-                    DrawParam::default()
-                        .color(LINE_COLOR)
-                        .scale([view_params.window_size.0, view_params.line_width])
-                        .dest([0.0, j as f32 * view_params.cell_size]),
-                );
+                // canvas.draw(
+                //     &Quad,
+                //     DrawParam::default()
+                //         .color(LINE_COLOR)
+                //         .scale([view_params.window_size.0, view_params.line_width])
+                //         .dest([0.0, j as f32 * view_params.cell_size]),
+                // );
+
+                lb.line(
+                    &[
+                        vec2(0.0, j as f32 * view_params.cell_size),
+                        vec2(view_params.window_size.0, j as f32 * view_params.cell_size),
+                    ],
+                    1.0,
+                    LINE_COLOR,
+                )?;
             }
+
+            let mesh = lb.build();
+            canvas.draw(&Mesh::from_data(ctx, mesh), DrawParam::default());
         }
 
         let mut live = 0;
+        let mut cb = MeshBuilder::new();
         for gc in self.universe.grid.live_cells() {
             if let GridCoord::Valid(x, y) = gc {
                 let x = x + self.view_params.xt;
@@ -241,16 +265,23 @@ impl EventHandler<GameError> for State {
                 {
                     live += 1;
                     let cs = view_params.cell_size;
-                    canvas.draw(
-                        &Quad,
-                        DrawParam::default()
-                            .color(CELL_COLOR)
-                            .scale([cs, cs])
-                            .dest([x as f32 * cs, y as f32 * cs]),
-                    );
+                    // canvas.draw(
+                    //     &Quad,
+                    //     DrawParam::default()
+                    //         .color(CELL_COLOR)
+                    //         .scale([cs, cs])
+                    //         .dest([x as f32 * cs, y as f32 * cs]),
+                    // );
+                    cb.rectangle(
+                        DrawMode::fill(),
+                        Rect::new(x as f32 * cs, y as f32 * cs, cs, cs),
+                        CELL_COLOR,
+                    )?;
                 }
             }
         }
+
+        canvas.draw(&Mesh::from_data(ctx, cb.build()), DrawParam::default());
 
         debug!("Draw finished: {} took {}", live, now() - start);
 
