@@ -141,7 +141,15 @@ Commit: c93a0f5
 
   - Following another comment on Discord, replaced Quads with a MeshBuilder.
     - This seems to work even faster...but I need to properly test it.
+
+Commit: e931c5e
+
+  - Failed to load gemini pattern with 800k cells...OOM
+    - RLE reader constructs a full Vec<Vec<bool>> of the bounding box.
+    - Instead we should push the data directly into the grid...
     - TODO
+
+
 
   - TODO look at the game loop to work out how to update better. Avoid busy looping.
   - TODO Can we further optimise the grid implementation... play with different numbers of dead generations in the current AB implementation. (Maybe rename it too!)
@@ -152,5 +160,6 @@ Commit: c93a0f5
   - TODO Parallelise the update function?
   - TODO Convert grid.elements() to an iterator
   - TODO Overview - showing where there are active cells across the entire space.
-  - TODO Maybe a Meshbuilder instead of Quads will be quicker?
+  - TODO Test whether MeshBuild is actually faster than Quad for drawing
+
   
