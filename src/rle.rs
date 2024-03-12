@@ -5,6 +5,12 @@ use std::cmp::max;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
+use crate::grid::GridCoord;
+
+pub trait Inject {
+    fn inject(&mut self, coord: GridCoord, alive: bool) -> anyhow::Result<()>;
+}
+
 #[derive(Debug)]
 enum RLEToken {
     Dead(u32),
@@ -90,12 +96,15 @@ fn parse_line(line: &str) -> Result<RLELine> {
 }
 
 #[allow(unused)]
-pub fn load_rle(filename: &str) -> Result<Vec<Vec<bool>>> {
+pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> anyhow::Result<()> {
     let lines = read_lines(filename)?;
     let lines: Vec<RLELine> = lines
         .iter()
         .map(|l| parse_line(l.as_str()))
         .collect::<Result<Vec<RLELine>>>()?;
+
+    trace!("Loaded {} RLELines", lines.len());
+
     let mut lines = lines.iter().peekable();
 
     while lines
@@ -109,20 +118,20 @@ pub fn load_rle(filename: &str) -> Result<Vec<Vec<bool>>> {
         .is_some()
     {}
 
-    let x: usize;
-    let y: usize;
+    let max_x: i64;
+    let max_y: i64;
 
     match lines.next() {
         Some(RLELine::Header(hx, hy)) => {
-            x = *hx;
-            y = *hy;
+            max_x = *hx as i64;
+            max_y = *hy as i64;
         }
         Some(_) => return Err(anyhow!("Missing header")),
         _ => return Err(anyhow!("Unexpected EOF reading header")),
     }
 
-    let mut data = Vec::with_capacity(y);
-    let mut line = Vec::with_capacity(x);
+    let mut x: i64 = 0;
+    let mut y: i64 = 0;
     for dl in lines {
         match dl {
             RLELine::Comment(_) => return Err(anyhow!("Comment found in data")),
@@ -131,37 +140,54 @@ pub fn load_rle(filename: &str) -> Result<Vec<Vec<bool>>> {
                 for t in tokens {
                     match t {
                         RLEToken::Dead(c) => {
-                            for _ in 0..*c {
-                                line.push(false);
+                            if skip_blank {
+                                x += *c as i64;
+                            } else {
+                                for _ in 0..*c {
+                                    inject.inject(GridCoord::Valid(x, y), false);
+                                    x += 1;
+                                }
                             }
                         }
                         RLEToken::Alive(c) => {
                             for _ in 0..*c {
-                                line.push(true);
+                                inject.inject(GridCoord::Valid(x, y), true);
+                                x += 1;
                             }
                         }
                         RLEToken::EOL(c) => {
-                            for _ in line.len()..x {
-                                line.push(false);
+                            if !skip_blank {
+                                for _ in x..max_x {
+                                    inject.inject(GridCoord::Valid(x, y), false);
+                                    x += 1;
+                                }
                             }
 
-                            data.push(line.clone());
+                            x = 0;
+                            y += 1;
 
                             // Push empty lines for repeated $
                             for _ in 0..c - 1 {
-                                data.push(vec![false; x as usize]);
-                            }
+                                if !skip_blank {
+                                    for i in 0..max_x {
+                                        inject.inject(GridCoord::Valid(i as i64, y), false);
+                                    }
+                                }
 
-                            line = Vec::with_capacity(x);
+                                y += 1;
+                            }
                         }
                         RLEToken::EOF => {
-                            for _ in line.len()..x {
-                                line.push(false);
+                            if !skip_blank {
+                                for _ in x..max_x {
+                                    inject.inject(GridCoord::Valid(x, y), false);
+                                    x += 1;
+                                }
                             }
 
-                            data.push(line.clone());
+                            y += 1;
 
-                            if data.len() < y {
+                            if y < max_y {
                                 return Err(anyhow!("Too few lines"));
                             };
                         }
@@ -171,27 +197,69 @@ pub fn load_rle(filename: &str) -> Result<Vec<Vec<bool>>> {
         }
     }
 
-    Ok(data)
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use std::assert_eq;
+    use std::{assert_eq, collections::HashMap};
 
     fn init() {
         let _ = env_logger::builder().is_test(true).try_init();
     }
 
+    struct TestData {
+        pub injects: usize,
+        pub coords: HashMap<GridCoord, bool>,
+    }
+
+    impl TestData {
+        pub fn new() -> Self {
+            TestData {
+                injects: 0,
+                coords: HashMap::new(),
+            }
+        }
+    }
+
+    impl Inject for TestData {
+        fn inject(&mut self, coord: GridCoord, alive: bool) -> anyhow::Result<()> {
+            self.injects += 1;
+            if alive {
+                self.coords.insert(coord, alive);
+            }
+
+            Ok(())
+        }
+    }
     #[test]
     fn load_single() -> Result<()> {
         init();
-        let data = load_rle("patterns/single.rle")?;
+        let mut data = TestData::new();
+        load_rle("patterns/single.rle", &mut data, true)?;
 
-        assert_eq!(data.len(), 1);
-        assert_eq!(data[0].len(), 1);
-        assert_eq!(data[0][0], true);
+        let hm = data.coords;
+
+        assert_eq!(data.injects, 1);
+        assert_eq!(hm.len(), 1);
+        assert_eq!(
+            *hm.get(&GridCoord::Valid(0, 0)).expect("Missing cell"),
+            true
+        );
+
+        Ok(())
+    }
+
+    #[test]
+    fn load_enormous() -> Result<()> {
+        init();
+
+        let mut data = TestData::new();
+        load_rle("patterns/gemini.rle", &mut data, true)?;
+
+        // TODO Check the result... for now we'll just check it loads.
 
         Ok(())
     }

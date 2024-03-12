@@ -15,7 +15,7 @@ use std::time::SystemTime;
 
 mod grid;
 use grid::{GridCoord, UniverseAB};
-use rle::load_rle;
+use rle::{load_rle, Inject};
 
 mod rle;
 
@@ -159,9 +159,37 @@ impl State {
     }
 
     pub fn load_rle(&mut self, filename: &str) -> GameResult {
-        let data = load_rle(filename).map_err(|e| GameError::CustomError(e.to_string()))?;
+        let mut injector = Injector::new(self);
+        load_rle(filename, &mut injector, true)
+            .map_err(|e| GameError::CustomError(e.to_string()))?;
 
-        self.inject_data(data)
+        info!("Loaded pattern: {} cells", injector.cells);
+        Ok(())
+    }
+}
+
+pub struct Injector<'a> {
+    state: &'a mut State,
+    cells: usize,
+}
+
+impl<'a> Injector<'a> {
+    fn new(state: &'a mut State) -> Self {
+        Self { state, cells: 0 }
+    }
+}
+
+impl<'a> Inject for Injector<'a> {
+    fn inject(&mut self, coord: GridCoord, alive: bool) -> anyhow::Result<()> {
+        if alive {
+            self.state.universe.grid.set(coord);
+            trace!("Setting coord: {:?}", coord);
+            self.cells += 1;
+        } else {
+            self.state.universe.grid.unset(coord);
+            trace!("Unsetting coord: {:?}", coord);
+        }
+        Ok(())
     }
 }
 

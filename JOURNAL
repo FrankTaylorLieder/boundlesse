@@ -146,16 +146,22 @@ Commit: e931c5e
 
   - Failed to load gemini pattern with 800k cells...OOM
     - RLE reader constructs a full Vec<Vec<bool>> of the bounding box.
-    - Instead we should push the data directly into the grid...
-    - TODO
+    - Instead we should capture the RLE file contents and inject the data directly into the grid.
+      - We do not need to build or inject the empty cells. This is the big saving.
+    - Current implementation loads data naively with 0,0 at top left.
+      - This is different from previous, where data was centered on the screen.
+      - We may decide to change to return list of live cells with bounding box so we can center it in main.rs, but not for now.
 
 
 
+  - TODO RLE import: center pattern on screen. Place 0,0 at the center?
+  - TODO Single step
+  - TODO Rebuild main display loop to not busy draw when stopped.
+  - TODO Main loop: always update display after each generation... don't skip draw.
   - TODO look at the game loop to work out how to update better. Avoid busy looping.
   - TODO Can we further optimise the grid implementation... play with different numbers of dead generations in the current AB implementation. (Maybe rename it too!)
   - TODO Formalise the grid API so we can enable different backend implementations.
   - TODO Build a file selector for loading.
-  - TODO Only return elements in the current view
   - TODO Reinstate the mouse to draw
   - TODO Parallelise the update function?
   - TODO Convert grid.elements() to an iterator
