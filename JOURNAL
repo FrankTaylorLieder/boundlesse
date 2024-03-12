@@ -152,12 +152,15 @@ Commit: e931c5e
       - This is different from previous, where data was centered on the screen.
       - We may decide to change to return list of live cells with bounding box so we can center it in main.rs, but not for now.
 
+Commit: b9680e4
+
+  - Stop updates looping... instead run a draw after every update. This prevents livelock of UI.
 
 
+  - TODO Run updates in a separate thread to void locking the UI for slow updates.
   - TODO RLE import: center pattern on screen. Place 0,0 at the center?
   - TODO Single step
   - TODO Rebuild main display loop to not busy draw when stopped.
-  - TODO Main loop: always update display after each generation... don't skip draw.
   - TODO look at the game loop to work out how to update better. Avoid busy looping.
   - TODO Can we further optimise the grid implementation... play with different numbers of dead generations in the current AB implementation. (Maybe rename it too!)
   - TODO Formalise the grid API so we can enable different backend implementations.

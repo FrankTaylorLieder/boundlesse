@@ -105,6 +105,8 @@ struct State {
     actual_fps: f64,
     dirty: bool,
     cell_count: usize,
+    updates: u32,
+    draws: u32,
 }
 
 impl State {
@@ -120,6 +122,8 @@ impl State {
             actual_fps: 0.0,
             dirty: true,
             cell_count: 0,
+            updates: 0,
+            draws: 0,
         }
     }
 
@@ -195,12 +199,16 @@ impl<'a> Inject for Injector<'a> {
 
 impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        debug!("Update requested...");
-        let start = now();
-        while ctx.time.check_update_time(self.fps) && self.running {
-            //if self.running {
-            debug!("Update accepted...{}", self.universe.generation);
+        trace!("Update requested...");
+
+        if ctx.time.check_update_time(self.fps) && self.running {
+            trace!("Update accepted...{}", self.universe.generation);
             let us = now();
+
+            self.updates += 1;
+            if self.updates % self.fps == 0 {
+                debug!("Updates: {}", self.updates);
+            }
 
             let cell_count = self.universe.update();
 
@@ -211,22 +219,25 @@ impl EventHandler<GameError> for State {
             self.dirty = true;
 
             let ds = now() - us;
-            debug!("Internal update done: {ds}");
+            trace!("Update done: {ds} - {}", self.cell_count);
         }
 
-        let duration = now() - start;
-        debug!("Update done: {duration} - {}", self.cell_count);
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
-        debug!("Draw requested...");
-        if !self.dirty {
-            debug!("Draw rejected");
-            return Ok(());
+        trace!("Draw requested...");
+
+        self.draws += 1;
+        trace!("Draw accepted...");
+        if self.draws % 60 == 0 {
+            debug!("Draws: {}", self.draws);
         }
 
-        debug!("Draw dirty...");
+        if !self.dirty {
+            trace!("Draw rejected");
+            return Ok(());
+        }
 
         let start = now();
 
@@ -247,25 +258,9 @@ impl EventHandler<GameError> for State {
                     1.0,
                     LINE_COLOR,
                 )?;
-
-                // canvas.draw(
-                //     &Quad,
-                //     DrawParam::default()
-                //         .color(LINE_COLOR)
-                //         .scale([view_params.line_width, view_params.window_size.1])
-                //         .dest([i as f32 * view_params.cell_size, 0.0]),
-                // );
             }
 
             for j in 0..view_params.view_size.1 as usize {
-                // canvas.draw(
-                //     &Quad,
-                //     DrawParam::default()
-                //         .color(LINE_COLOR)
-                //         .scale([view_params.window_size.0, view_params.line_width])
-                //         .dest([0.0, j as f32 * view_params.cell_size]),
-                // );
-
                 lb.line(
                     &[
                         vec2(0.0, j as f32 * view_params.cell_size),
@@ -293,13 +288,6 @@ impl EventHandler<GameError> for State {
                 {
                     live += 1;
                     let cs = view_params.cell_size;
-                    // canvas.draw(
-                    //     &Quad,
-                    //     DrawParam::default()
-                    //         .color(CELL_COLOR)
-                    //         .scale([cs, cs])
-                    //         .dest([x as f32 * cs, y as f32 * cs]),
-                    // );
                     cb.rectangle(
                         DrawMode::fill(),
                         Rect::new(x as f32 * cs, y as f32 * cs, cs, cs),
@@ -311,7 +299,7 @@ impl EventHandler<GameError> for State {
 
         canvas.draw(&Mesh::from_data(ctx, cb.build()), DrawParam::default());
 
-        debug!("Draw finished: {} took {}", live, now() - start);
+        trace!("Draw finished: {} took {}", live, now() - start);
 
         if self.show_header {
             let mut text = Text::new(format!(
@@ -334,7 +322,7 @@ impl EventHandler<GameError> for State {
         canvas.finish(ctx)?;
 
         let duration = now() - start;
-        debug!("Draw done: {duration}");
+        trace!("Draw done: {duration}");
 
         Ok(())
     }
