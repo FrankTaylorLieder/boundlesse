@@ -156,8 +156,22 @@ Commit: b9680e4
 
   - Stop updates looping... instead run a draw after every update. This prevents livelock of UI.
 
+Commit: cc0abd4
 
-  - TODO Run updates in a separate thread to void locking the UI for slow updates.
+  - Show the real FPS.
+  - Yield to CPU after every draw to prevent CPU busy looping?
+  - Note: Removal of loop in update means the FPS cannot go past 60 fps - the
+    default frame rate of ggez. Need to separate Generaions per second from
+    Frames per second.
+    - Switch back to while, but put a cap on the time in Update before allowing a draw to happen.
+      - Cap set to 100ms.
+      - Gemini now updates the UI after every update.
+      - Glider when set to 1000 FPS, updates 50/s.
+      - Seems to be best of both worlds!
+
+Commit:
+
+  - TODO Run updates in a separate thread to void locking the UI for slow updates?
   - TODO RLE import: center pattern on screen. Place 0,0 at the center?
   - TODO Single step
   - TODO Rebuild main display loop to not busy draw when stopped.

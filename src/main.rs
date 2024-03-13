@@ -10,8 +10,8 @@ use ggez::{
     Context, ContextBuilder, GameError, GameResult,
 };
 use log::*;
-use std::env;
 use std::time::SystemTime;
+use std::{env, thread};
 
 mod grid;
 use grid::{GridCoord, UniverseAB};
@@ -25,6 +25,9 @@ fn now() -> u128 {
         .unwrap();
     duration_since_epoch.as_nanos() / 1000
 }
+
+// Don't start additional udpates in Update() if we've spent more than this time (ms) here already.
+const LIVENESS_TARGET: u128 = 100;
 const DEFAULT_WINDOW_SIZE: (f32, f32) = (2000.0, 1500.0);
 
 #[derive(Debug)]
@@ -201,7 +204,11 @@ impl EventHandler<GameError> for State {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
         trace!("Update requested...");
 
-        if ctx.time.check_update_time(self.fps) && self.running {
+        let start = now();
+        while ctx.time.check_update_time(self.fps)
+            && self.running
+            && (now() - start < LIVENESS_TARGET)
+        {
             trace!("Update accepted...{}", self.universe.generation);
             let us = now();
 
@@ -303,9 +310,10 @@ impl EventHandler<GameError> for State {
 
         if self.show_header {
             let mut text = Text::new(format!(
-                "{}, FPS: {}, Pan: ({},{}), Cell size: {}, Generation: {}, Cells: {}",
+                "{}, FPS: {}/{:.2}, Pan: ({},{}), Cell size: {}, Generation: {}, Cells: {}",
                 if self.running { "Running" } else { "Stopped" },
                 self.fps,
+                self.actual_fps,
                 self.view_params.xt,
                 self.view_params.yt,
                 self.view_params.cell_size,
@@ -323,6 +331,8 @@ impl EventHandler<GameError> for State {
 
         let duration = now() - start;
         trace!("Draw done: {duration}");
+
+        thread::yield_now();
 
         Ok(())
     }
