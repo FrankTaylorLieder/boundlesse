@@ -179,8 +179,8 @@ Commit: a34efed
   - Prepare for first public release:
     - Choose a better name!
       - boundless + esse = boundlesse
-    - TODO Readme
-    - TODO Tidy all code
+    - DONE Readme
+    - STARTED Tidy all code
     - TODO Setup Github automations
 
 

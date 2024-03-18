@@ -24,7 +24,7 @@ impl GridCoord {
                 self.adjust(0, -1),
                 self.adjust(1, -1),
                 self.adjust(-1, 0),
-                self.clone(),
+                *self,
                 self.adjust(1, 0),
                 self.adjust(-1, 1),
                 self.adjust(0, 1),
@@ -57,10 +57,7 @@ impl SparseGridOld {
     }
 
     pub fn get(&self, k: &GridCoord) -> Option<usize> {
-        match self.elements.get(k) {
-            Some(&v) => Some(v),
-            None => None,
-        }
+        self.elements.get(k).copied()
     }
 
     pub fn is_alive(&self, k: &GridCoord) -> bool {
@@ -68,7 +65,7 @@ impl SparseGridOld {
     }
 
     pub fn elements(&self) -> Vec<GridCoord> {
-        self.elements.keys().map(|k| *k).collect()
+        self.elements.keys().copied().collect()
     }
 
     fn expand(&self) -> Vec<GridCoord> {
@@ -83,7 +80,7 @@ impl SparseGridOld {
 
     fn tally(&mut self, cells: &[GridCoord]) {
         for c in cells {
-            let count = match self.elements.get(&c) {
+            let count = match self.elements.get(c) {
                 Some(&v) => v + 1,
                 None => 1,
             };
@@ -101,6 +98,10 @@ impl SparseGridOld {
 
     pub fn len(&self) -> usize {
         self.elements.keys().len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.elements.is_empty()
     }
 }
 
@@ -199,7 +200,7 @@ impl SparseGridGenerations {
     // Tally for gen+1
     fn tally(&mut self, generation: usize, cells: &[GridCoord]) {
         for c in cells {
-            match self.elements.get_mut(&c) {
+            match self.elements.get_mut(c) {
                 Some(v) => {
                     if v.generation < generation {
                         v.generation = generation;

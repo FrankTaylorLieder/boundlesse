@@ -15,8 +15,8 @@ pub trait Inject {
 enum RLEToken {
     Dead(u32),
     Alive(u32),
-    EOL(u32),
-    EOF,
+    Eol(u32),
+    Eof,
 }
 
 #[derive(Debug)]
@@ -66,12 +66,12 @@ fn parse_data(line: &str) -> Result<RLELine> {
                 count = 0;
             }
             '$' => {
-                tokens.push(RLEToken::EOL(max(count, 1)));
+                tokens.push(RLEToken::Eol(max(count, 1)));
                 count = 0;
             }
-            '!' => tokens.push(RLEToken::EOF),
+            '!' => tokens.push(RLEToken::Eof),
             c => {
-                if c.is_digit(10) {
+                if c.is_ascii_digit() {
                     count *= 10;
                     count += c.to_digit(10).ok_or(anyhow!("Invalid run length"))?;
                 } else {
@@ -86,9 +86,9 @@ fn parse_data(line: &str) -> Result<RLELine> {
 
 fn parse_line(line: &str) -> Result<RLELine> {
     let trimmed = line.trim();
-    if trimmed.starts_with("#") {
+    if trimmed.starts_with('#') {
         Ok(RLELine::Comment(trimmed.to_owned()))
-    } else if trimmed.starts_with("x") {
+    } else if trimmed.starts_with('x') {
         parse_header(trimmed)
     } else {
         parse_data(trimmed)
@@ -162,14 +162,13 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
                                 x += 1;
                             }
                         }
-                        RLEToken::EOL(c) => {
+                        RLEToken::Eol(c) => {
                             if !skip_blank {
-                                for _ in x..max_x {
+                                for x in x..max_x {
                                     inject.inject(
                                         GridCoord::Valid(x + offset_x, y + offset_y),
                                         false,
                                     );
-                                    x += 1;
                                 }
                             }
 
@@ -181,7 +180,7 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
                                 if !skip_blank {
                                     for i in 0..max_x {
                                         inject.inject(
-                                            GridCoord::Valid(i as i64 + offset_x, y + offset_y),
+                                            GridCoord::Valid(i + offset_x, y + offset_y),
                                             false,
                                         );
                                     }
@@ -190,14 +189,13 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
                                 y += 1;
                             }
                         }
-                        RLEToken::EOF => {
+                        RLEToken::Eof => {
                             if !skip_blank {
-                                for _ in x..max_x {
+                                for x in x..max_x {
                                     inject.inject(
                                         GridCoord::Valid(x + offset_x, y + offset_y),
                                         false,
                                     );
-                                    x += 1;
                                 }
                             }
 

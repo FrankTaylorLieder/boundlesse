@@ -5,7 +5,7 @@ use ggez::input::keyboard::{KeyCode, KeyInput, KeyMods};
 use ggez::{
     conf::WindowMode,
     event::{self, EventHandler},
-    graphics::{self, Color, DrawMode, DrawParam, Mesh, Quad, Rect, Text},
+    graphics::{self, Color, DrawMode, DrawParam, Mesh, Rect, Text},
     mint::Point2,
     Context, ContextBuilder, GameError, GameResult,
 };
@@ -145,7 +145,7 @@ impl State {
         for x in off_x..(grid_size.0 + off_x) {
             for y in off_y..(grid_size.1 + off_y) {
                 if rand::random() {
-                    self.universe.grid.set(GridCoord::Valid(x as i64, y as i64));
+                    self.universe.grid.set(GridCoord::Valid(x, y));
                 }
             }
         }
@@ -274,11 +274,7 @@ impl EventHandler<GameError> for State {
             if let GridCoord::Valid(x, y) = gc {
                 let x = x + self.view_params.xt;
                 let y = y + self.view_params.yt;
-                if x >= 0
-                    && x < view_params.view_size.0 as i64
-                    && y >= 0
-                    && y < view_params.view_size.1 as i64
-                {
+                if x >= 0 && x < view_params.view_size.0 && y >= 0 && y < view_params.view_size.1 {
                     cells_drawn += 1;
                     let cs = view_params.cell_size;
                     cb.rectangle(
@@ -356,13 +352,13 @@ impl EventHandler<GameError> for State {
                 self.view_params.yt += pan_delta;
             }
             if keycode == KeyCode::Down {
-                self.view_params.yt += -1 * pan_delta;
+                self.view_params.yt += -pan_delta;
             }
             if keycode == KeyCode::Left {
                 self.view_params.xt += pan_delta;
             }
             if keycode == KeyCode::Right {
-                self.view_params.xt += -1 * pan_delta;
+                self.view_params.xt += -pan_delta;
             }
             if keycode == KeyCode::C {
                 self.view_params.xt = self.view_params.view_size.0 / 2;
