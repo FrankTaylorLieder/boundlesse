@@ -174,19 +174,27 @@ Commit: 0761490
   - Change FPS by 10%
   - Tidy up benchmarks and Universe/Grid naming
 
+Commit: a34efed
 
+  - Prepare for first public release:
+    - Choose a better name!
+      - boundless + esse = boundlesse
+    - TODO Readme
+    - TODO Tidy all code
+    - TODO Setup Github automations
+
+
+
+---------------
   - TODO Run updates in a separate thread to void locking the UI for slow updates?
   - TODO RLE import: center pattern on screen. Place 0,0 at the center?
   - TODO Single step
   - TODO Rebuild main display loop to not busy draw when stopped.
-  - TODO look at the game loop to work out how to update better. Avoid busy looping.
-  - TODO Can we further optimise the grid implementation... play with different numbers of dead generations in the current AB implementation. (Maybe rename it too!)
+  - TODO Can we further optimise the grid implementation... play with different numbers of dead generations in the current implementation.
   - TODO Formalise the grid API so we can enable different backend implementations.
   - TODO Build a file selector for loading.
   - TODO Reinstate the mouse to draw
   - TODO Parallelise the update function?
-  - TODO Convert grid.elements() to an iterator
   - TODO Overview - showing where there are active cells across the entire space.
   - TODO Test whether MeshBuild is actually faster than Quad for drawing
 
-  
