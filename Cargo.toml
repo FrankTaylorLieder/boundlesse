@@ -1,5 +1,5 @@
 [package]
-name = "rusty-life"
+name = "boundlesse"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
-dotenv = "0.15.0"
+dotenvy = "0.15.7"
 env_logger = "0.10.0"
 ggez = "0.9.3"
 log = "0.4.20"

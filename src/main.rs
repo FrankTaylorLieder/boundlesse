@@ -32,11 +32,19 @@ const DEFAULT_WINDOW_SIZE: (f32, f32) = (2000.0, 1500.0);
 
 #[derive(Debug)]
 struct ViewParams {
+    // Reported window size in pixels.
     window_size: (f32, f32),
+
+    // Cell size in pixels.
     cell_size: f32,
+
+    // Visible area size in cells.
     view_size: (i64, i64),
-    grid_size: (i64, i64),
-    line_width: f32,
+
+    // Size of pattern (in cells) to create when random data is requested.
+    pattern_size: (i64, i64),
+
+    // Viewport panning offset in cells.
     xt: i64,
     yt: i64,
 }
@@ -69,17 +77,17 @@ impl ViewParams {
 impl Default for ViewParams {
     fn default() -> Self {
         let cs = 10.0;
+        let vs = (
+            (DEFAULT_WINDOW_SIZE.0 / cs) as i64,
+            (DEFAULT_WINDOW_SIZE.1 / cs) as i64,
+        );
         let mut vp = ViewParams {
             window_size: DEFAULT_WINDOW_SIZE,
             cell_size: cs,
-            view_size: (
-                (DEFAULT_WINDOW_SIZE.0 / cs) as i64,
-                (DEFAULT_WINDOW_SIZE.1 / cs) as i64,
-            ),
-            grid_size: (200, 200),
-            line_width: 1.0,
-            xt: 0,
-            yt: 0,
+            view_size: vs,
+            pattern_size: (200, 200),
+            xt: vs.0 / 2,
+            yt: vs.1 / 2,
         };
 
         vp.resize_window(vp.window_size.0, vp.window_size.1);
@@ -113,8 +121,7 @@ struct State {
 }
 
 impl State {
-    #[allow(unused)]
-    pub fn new(ctx: &mut Context) -> Self {
+    pub fn new(_ctx: &mut Context) -> Self {
         State {
             view_params: ViewParams::default(),
             universe: Universe::new(),
@@ -130,30 +137,9 @@ impl State {
         }
     }
 
-    fn inject_data(&mut self, data: Vec<Vec<bool>>) -> GameResult {
-        let view_size = self.view_params.view_size;
-        let data_x = data[0].len() as i64;
-        let data_y = data.len() as i64;
-
-        let off_x = ((view_size.0 - data_x) / 2) - self.view_params.xt;
-        let off_y = ((view_size.1 - data_y) / 2) - self.view_params.yt;
-        for y in 0..data_y {
-            for x in 0..data_x {
-                if data[y as usize][x as usize] {
-                    self.universe
-                        .grid
-                        .set(GridCoord::Valid(x + off_x, y + off_y));
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    #[allow(unused)]
     pub fn seed_rand(&mut self) {
         let view_size = self.view_params.view_size;
-        let grid_size = self.view_params.grid_size;
+        let grid_size = self.view_params.pattern_size;
         let off_x = ((view_size.0 - grid_size.0) / 2) - self.view_params.xt;
         let off_y = ((view_size.1 - grid_size.1) / 2) - self.view_params.yt;
         for x in off_x..(grid_size.0 + off_x) {
@@ -226,7 +212,7 @@ impl EventHandler<GameError> for State {
             self.dirty = true;
 
             let ds = now() - us;
-            debug!("Update done: {ds} - {}", self.cell_count);
+            trace!("Update done: {ds} - {}", self.cell_count);
         }
 
         Ok(())
@@ -236,7 +222,6 @@ impl EventHandler<GameError> for State {
         trace!("Draw requested...");
 
         self.draws += 1;
-        trace!("Draw accepted...");
         if self.draws % 60 == 0 {
             debug!("Draws: {}", self.draws);
         }
@@ -246,6 +231,7 @@ impl EventHandler<GameError> for State {
             return Ok(());
         }
 
+        trace!("Draw accepted...");
         let start = now();
 
         self.dirty = false;
@@ -282,7 +268,7 @@ impl EventHandler<GameError> for State {
             canvas.draw(&Mesh::from_data(ctx, mesh), DrawParam::default());
         }
 
-        let mut live = 0;
+        let mut cells_drawn = 0;
         let mut cb = MeshBuilder::new();
         for gc in self.universe.grid.live_cells() {
             if let GridCoord::Valid(x, y) = gc {
@@ -293,7 +279,7 @@ impl EventHandler<GameError> for State {
                     && y >= 0
                     && y < view_params.view_size.1 as i64
                 {
-                    live += 1;
+                    cells_drawn += 1;
                     let cs = view_params.cell_size;
                     cb.rectangle(
                         DrawMode::fill(),
@@ -306,11 +292,11 @@ impl EventHandler<GameError> for State {
 
         canvas.draw(&Mesh::from_data(ctx, cb.build()), DrawParam::default());
 
-        trace!("Draw finished: {} took {}", live, now() - start);
+        trace!("Draw finished: {} took {}", cells_drawn, now() - start);
 
         if self.show_header {
             let mut text = Text::new(format!(
-                "{}, FPS: {}/{:.2}, Pan: ({},{}), Cell size: {}, Generation: {}, Cells: {}",
+                "{}, GPS: {}, FPS: {:.2}, Pan: ({},{}), Cell size: {}, Generation: {}, Cells: {}",
                 if self.running { "Running" } else { "Stopped" },
                 self.fps,
                 self.actual_fps,
@@ -379,8 +365,8 @@ impl EventHandler<GameError> for State {
                 self.view_params.xt += -1 * pan_delta;
             }
             if keycode == KeyCode::C {
-                self.view_params.xt = 0;
-                self.view_params.yt = 0;
+                self.view_params.xt = self.view_params.view_size.0 / 2;
+                self.view_params.yt = self.view_params.view_size.1 / 2;
             }
             if keycode == KeyCode::Delete || keycode == KeyCode::Back {
                 self.universe = Universe::new();
@@ -423,9 +409,9 @@ impl EventHandler<GameError> for State {
     }
 }
 
-// Note: .env -> RUST_LOG=rusty_life=debug
-fn main() -> GameResult {
-    dotenv::dotenv().ok();
+// Note: .env -> RUST_LOG=boundless=debug
+fn main() -> anyhow::Result<()> {
+    dotenvy::dotenv().ok();
     env_logger::init_from_env(env_logger::Env::default());
 
     info!("Starting rusty-life...");

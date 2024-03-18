@@ -130,6 +130,10 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
         _ => return Err(anyhow!("Unexpected EOF reading header")),
     }
 
+    // Offset the pattern to center as 0,0
+    let offset_x = -(max_x / 2);
+    let offset_y = -(max_y / 2);
+
     let mut x: i64 = 0;
     let mut y: i64 = 0;
     for dl in lines {
@@ -144,21 +148,27 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
                                 x += *c as i64;
                             } else {
                                 for _ in 0..*c {
-                                    inject.inject(GridCoord::Valid(x, y), false);
+                                    inject.inject(
+                                        GridCoord::Valid(x + offset_x, y + offset_y),
+                                        false,
+                                    );
                                     x += 1;
                                 }
                             }
                         }
                         RLEToken::Alive(c) => {
                             for _ in 0..*c {
-                                inject.inject(GridCoord::Valid(x, y), true);
+                                inject.inject(GridCoord::Valid(x + offset_x, y + offset_y), true);
                                 x += 1;
                             }
                         }
                         RLEToken::EOL(c) => {
                             if !skip_blank {
                                 for _ in x..max_x {
-                                    inject.inject(GridCoord::Valid(x, y), false);
+                                    inject.inject(
+                                        GridCoord::Valid(x + offset_x, y + offset_y),
+                                        false,
+                                    );
                                     x += 1;
                                 }
                             }
@@ -170,7 +180,10 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
                             for _ in 0..c - 1 {
                                 if !skip_blank {
                                     for i in 0..max_x {
-                                        inject.inject(GridCoord::Valid(i as i64, y), false);
+                                        inject.inject(
+                                            GridCoord::Valid(i as i64 + offset_x, y + offset_y),
+                                            false,
+                                        );
                                     }
                                 }
 
@@ -180,7 +193,10 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
                         RLEToken::EOF => {
                             if !skip_blank {
                                 for _ in x..max_x {
-                                    inject.inject(GridCoord::Valid(x, y), false);
+                                    inject.inject(
+                                        GridCoord::Valid(x + offset_x, y + offset_y),
+                                        false,
+                                    );
                                     x += 1;
                                 }
                             }

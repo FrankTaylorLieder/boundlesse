@@ -17,4 +17,35 @@ Status:
 - There are many possible new features that could be added.
 
 
+## Usage
 
+### Building
+
+The usual cargo build commands:
+
+- Build: `cargo build --release`
+  - Executable: `target/release/boundlesse`
+- Test: `cargo test`
+- Benchmarks: `cargo bench`
+
+### Running
+
+To run: `boundlesse [pattern]`
+
+If provided, the pattern is loaded into the universe, without one the universe is blank.
+
+Patterns are RLE encoded files (see: [Run Length Encoded](https://conwaylife.com/wiki/Run_Length_Encoded)).
+A set of interesting patterns (from LifeWiki) is provided in the `patterns/` directory.
+
+The following keys control Boundlesse:
+
+- `<SPC>`: start/stop the simulation.
+- `=` / `+`: increase the generations rate.
+- `-` / `_`: decrease the generations rate.
+- `<Arrow>`: move the viewport a small amount, or large amount if `<Shift>` is held too.
+- `c`: center the viewport.
+- `<Del>` / `<BS>`: clear the universe.
+- `g`: toggle showing the grid.
+- `h`: toggle showing the heaser.
+- `a` / `s`: decrease/increase the zoom level.
+- `r`: create a grid of random data 
