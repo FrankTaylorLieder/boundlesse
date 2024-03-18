@@ -110,7 +110,7 @@ struct State {
     view_params: ViewParams,
     universe: Universe,
     show_grid: bool,
-    fps: u32,
+    gps: u32,
     running: bool,
     show_header: bool,
     actual_fps: f64,
@@ -126,7 +126,7 @@ impl State {
             view_params: ViewParams::default(),
             universe: Universe::new(),
             show_grid: true,
-            fps: 10,
+            gps: 10,
             running: false,
             show_header: true,
             actual_fps: 0.0,
@@ -191,7 +191,7 @@ impl EventHandler<GameError> for State {
         trace!("Update requested...");
 
         let start = now();
-        while ctx.time.check_update_time(self.fps)
+        while ctx.time.check_update_time(self.gps)
             && self.running
             && (now() - start < LIVENESS_TARGET)
         {
@@ -199,7 +199,7 @@ impl EventHandler<GameError> for State {
             let us = now();
 
             self.updates += 1;
-            if self.updates % self.fps == 0 {
+            if self.updates % self.gps == 0 {
                 debug!("Updates: {}", self.updates);
             }
 
@@ -294,7 +294,7 @@ impl EventHandler<GameError> for State {
             let mut text = Text::new(format!(
                 "{}, GPS: {}, FPS: {:.2}, Pan: ({},{}), Cell size: {}, Generation: {}, Cells: {}",
                 if self.running { "Running" } else { "Stopped" },
-                self.fps,
+                self.gps,
                 self.actual_fps,
                 self.view_params.xt,
                 self.view_params.yt,
@@ -319,18 +319,6 @@ impl EventHandler<GameError> for State {
         Ok(())
     }
 
-    // fn mouse_button_down_event(
-    //     &mut self,
-    //     _ctx: &mut Context,
-    //     _button: MouseButton,
-    //     x: f32,
-    //     y: f32,
-    // ) -> GameResult {
-    //     self.grid[(x / CELL_SIZE.0).floor() as usize][(y / CELL_SIZE.1).floor() as usize] ^= true;
-
-    //     Ok(())
-    // }
-
     fn key_down_event(&mut self, _ctx: &mut Context, input: KeyInput, repeat: bool) -> GameResult {
         if let Some(keycode) = input.keycode {
             let pan_delta = if input.mods.contains(KeyMods::SHIFT) {
@@ -343,10 +331,10 @@ impl EventHandler<GameError> for State {
                 self.running ^= true;
             }
             if keycode == KeyCode::Plus || keycode == KeyCode::Equals {
-                self.fps += u32::max(self.fps / 10, 1);
+                self.gps += u32::max(self.gps / 10, 1);
             }
-            if (keycode == KeyCode::Minus || keycode == KeyCode::Underline) && self.fps > 1 {
-                self.fps -= u32::max(self.fps / 10, 1);
+            if (keycode == KeyCode::Minus || keycode == KeyCode::Underline) && self.gps > 1 {
+                self.gps -= u32::max(self.gps / 10, 1);
             }
             if keycode == KeyCode::Up {
                 self.view_params.yt += pan_delta;
@@ -366,6 +354,7 @@ impl EventHandler<GameError> for State {
             }
             if keycode == KeyCode::Delete || keycode == KeyCode::Back {
                 self.universe = Universe::new();
+                self.cell_count = 0;
             }
             if keycode == KeyCode::G {
                 self.show_grid = !self.show_grid;
@@ -381,7 +370,6 @@ impl EventHandler<GameError> for State {
                 self.view_params.cell_size += 1.0;
                 self.view_params.resize_zoom();
             }
-
             if keycode == KeyCode::R {
                 self.seed_rand();
             }
@@ -398,7 +386,7 @@ impl EventHandler<GameError> for State {
         width: f32,
         height: f32,
     ) -> Result<(), GameError> {
-        info!("Resize: {}, {}", width, height);
+        debug!("Resize: {}, {}", width, height);
 
         self.view_params.resize_window(width, height);
         Ok(())

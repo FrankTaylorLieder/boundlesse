@@ -5,9 +5,11 @@ Boundlesse is a Rust-based desktop app for running Conway's Game of Life.
 It's goals are:
 
 - No artificial limits
-  - The universe can be as large as needed, limited only by memory to store and update it.
+  - The universe can be as large as needed, limited only by memory to store and
+  update it.
 - As fast as possible
-  - Some attention has been paid to performance, but there is probably a long way to go!
+  - Some attention has been paid to performance, but there is probably a long
+  way to go!
 - Explore life configrations from [LifeWiki](https://conwaylife.com/wiki).
   - You can load RLE encoded patterns to initialise the Universe.
 
@@ -32,10 +34,12 @@ The usual cargo build commands:
 
 To run: `boundlesse [pattern]`
 
-If provided, the pattern is loaded into the universe, without one the universe is blank.
+If provided, the pattern is loaded into the universe, without one the universe
+is blank.
 
-Patterns are RLE encoded files (see: [Run Length Encoded](https://conwaylife.com/wiki/Run_Length_Encoded)).
-A set of interesting patterns (from LifeWiki) is provided in the `patterns/` directory.
+Patterns are RLE encoded files (see: [Run Length
+Encoded](https://conwaylife.com/wiki/Run_Length_Encoded)). A set of interesting
+patterns (from LifeWiki) is provided in the `patterns/` directory.
 
 The following keys control Boundlesse:
 
@@ -46,11 +50,26 @@ The following keys control Boundlesse:
 - `c`: center the viewport.
 - `<Del>`, `<BS>`: clear the universe.
 - `g`: toggle showing the grid.
-- `h`: toggle showing the heaser.
+- `h`: toggle showing the header.
 - `a` / `s`: decrease/increase the zoom level.
 - `r`: create a grid of random data 
 
+You can control the target Generations Per Second (GPS). The application
+attempts to render the UI at 60 Frames Per Second (FPS).
+
+- If you set a GPS higher than 60, then multiple generations will be computed
+per frame.
+- If the configuration is large (i.e. the time to compute a generation is more
+than 1/60s) then the FPS will drop.
+- If the FPS is high and time to compute generations is also high then both
+the achieved GPS and FPS will reduce.
+
+### Logging
+
+Boundlesse uses [`env_logger`](https://crates.io/crates/env_logger) for
+logging. Set the `RUST_LOG` environment variable to control the logging level.
+
 ## Development
 
-See `JOURNAL` for a log of the development of Boundlesse.
-This also includes a list of possible improvements.
+See `JOURNAL` for a log of the development of Boundlesse. This also includes a
+list of possible improvements.
