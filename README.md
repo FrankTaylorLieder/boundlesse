@@ -40,12 +40,13 @@ A set of interesting patterns (from LifeWiki) is provided in the `patterns/` dir
 The following keys control Boundlesse:
 
 - `<SPC>`: start/stop the simulation.
-- `=` / `+`: increase the generations rate.
-- `-` / `_`: decrease the generations rate.
+- `=`, `+`: increase the generations rate.
+- `-`, `_`: decrease the generations rate.
 - `<Arrow>`: move the viewport a small amount, or large amount if `<Shift>` is held too.
 - `c`: center the viewport.
-- `<Del>` / `<BS>`: clear the universe.
+- `<Del>`, `<BS>`: clear the universe.
 - `g`: toggle showing the grid.
 - `h`: toggle showing the heaser.
 - `a` / `s`: decrease/increase the zoom level.
 - `r`: create a grid of random data 
+
