@@ -50,3 +50,7 @@ The following keys control Boundlesse:
 - `a` / `s`: decrease/increase the zoom level.
 - `r`: create a grid of random data 
 
+## Development
+
+See `JOURNAL` for a log of the development of Boundlesse.
+This also includes a list of possible improvements.
