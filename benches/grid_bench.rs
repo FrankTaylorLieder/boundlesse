@@ -1,5 +1,5 @@
+use boundlesse::grid::{GridCoord, Universe, UniverseOld};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use rusty_life::grid::{GridCoord, Universe, UniverseOld};
 
 fn run_r(universe: &mut UniverseOld, generations: usize) {
     let mut _total: u64 = 0;

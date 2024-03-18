@@ -130,7 +130,7 @@ pub fn load_rle(filename: &str, inject: &mut impl Inject, skip_blank: bool) -> a
         _ => return Err(anyhow!("Unexpected EOF reading header")),
     }
 
-    // Offset the pattern to center as 0,0
+    // Offset the pattern to center at 0,0
     let offset_x = -(max_x / 2);
     let offset_y = -(max_y / 2);
 

@@ -36,6 +36,8 @@ impl GridCoord {
     }
 }
 
+// Naive universe ---------------------------------
+
 pub struct SparseGridOld {
     elements: HashMap<GridCoord, usize>,
 }
@@ -135,6 +137,8 @@ impl UniverseOld {
         cell_count
     }
 }
+
+// Generational universe -----------------------------
 
 #[derive(Debug)]
 pub struct Cell {
@@ -243,10 +247,6 @@ impl SparseGridGenerations {
             v.generation == generation
         });
     }
-
-    // pub fn len(&self) -> usize {
-    //     self.elements.keys().len()
-    // }
 }
 
 pub struct Universe {
@@ -271,8 +271,6 @@ impl Universe {
             self.grid.tally(self.generation, &c.expand());
             cell_count += 1;
         }
-
-        // println!("Tallied: {:?}", self.grid);
 
         self.grid.finalise(self.generation);
 
