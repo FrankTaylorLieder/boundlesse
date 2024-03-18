@@ -389,6 +389,7 @@ impl EventHandler<GameError> for State {
         debug!("Resize: {}, {}", width, height);
 
         self.view_params.resize_window(width, height);
+        self.dirty = true;
         Ok(())
     }
 }
