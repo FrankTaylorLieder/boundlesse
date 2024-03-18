@@ -36,14 +36,14 @@ impl GridCoord {
     }
 }
 
-pub struct SparseGrid {
+pub struct SparseGridOld {
     elements: HashMap<GridCoord, usize>,
 }
 
 #[allow(unused)]
-impl SparseGrid {
+impl SparseGridOld {
     pub fn new() -> Self {
-        SparseGrid {
+        SparseGridOld {
             elements: HashMap::new(),
         }
     }
@@ -104,16 +104,16 @@ impl SparseGrid {
     }
 }
 
-pub struct Universe {
-    pub grid: SparseGrid,
+pub struct UniverseOld {
+    pub grid: SparseGridOld,
     pub generation: usize,
 }
 
 #[allow(unused)]
-impl Universe {
-    pub fn new() -> Universe {
-        Universe {
-            grid: SparseGrid::new(),
+impl UniverseOld {
+    pub fn new() -> UniverseOld {
+        UniverseOld {
+            grid: SparseGridOld::new(),
             generation: 0,
         }
     }
@@ -121,7 +121,7 @@ impl Universe {
     pub fn update(&mut self) -> usize {
         self.generation += 1;
         let mut cell_count: usize = 0;
-        let mut next = SparseGrid::new();
+        let mut next = SparseGridOld::new();
         for c in self.grid.elements() {
             next.tally(&c.expand());
             cell_count += 1;
@@ -136,22 +136,22 @@ impl Universe {
 }
 
 #[derive(Debug)]
-struct Cell {
-    is_alive: bool,
-    generation: usize,
-    tally: usize,
+pub struct Cell {
+    pub is_alive: bool,
+    pub generation: usize,
+    pub tally: usize,
 }
 
 #[derive(Debug)]
-pub struct SparseGridAB {
-    elements: HashMap<GridCoord, Cell>,
-    generation: usize,
+pub struct SparseGridGenerations {
+    pub elements: HashMap<GridCoord, Cell>,
+    pub generation: usize,
 }
 
 #[allow(unused)]
-impl SparseGridAB {
+impl SparseGridGenerations {
     pub fn new() -> Self {
-        SparseGridAB {
+        SparseGridGenerations {
             elements: HashMap::new(),
             generation: 0,
         }
@@ -173,13 +173,6 @@ impl SparseGridAB {
         self.elements.remove(&k);
     }
 
-    // pub fn get(&self, k: &GridCoord) -> Option<usize> {
-    //     match self.elements.get(k) {
-    //         Some(v) => Some(v.tally),
-    //         None => None,
-    //     }
-    // }
-
     pub fn is_alive(&self, k: &GridCoord) -> bool {
         match self.elements.get(k) {
             Some(v) => v.is_alive,
@@ -195,15 +188,13 @@ impl SparseGridAB {
             .collect()
     }
 
-    // fn expand(&self) -> Vec<GridCoord> {
-    //     let iter = self.elements.iter();
-    //     let mut elements: Vec<GridCoord> = Vec::with_capacity(iter.len());
-    //     for (&gc, _) in iter {
-    //         elements.push(gc);
-    //     }
-    //
-    //     elements
-    // }
+    pub fn live_cells_ref(&self) -> Vec<&GridCoord> {
+        self.elements
+            .iter()
+            .filter(|&(k, v)| v.is_alive)
+            .map(|(k, _)| k)
+            .collect()
+    }
 
     // Tally for gen+1
     fn tally(&mut self, generation: usize, cells: &[GridCoord]) {
@@ -235,10 +226,11 @@ impl SparseGridAB {
     fn finalise(&mut self, generation: usize) {
         self.elements.retain(|k, v| {
             // Firstly... adjust the cells to the correct life
-            if v.generation < generation {
-                // This cell has no neighbours... so will die
-                v.is_alive = false;
-            } else {
+            // if v.generation < generation {
+            //     // This cell has no neighbours... so will die
+            //     v.is_alive = false;
+            // } else {
+            if v.generation == generation {
                 // This cell has some neighbours, so might live.
                 let t = v.tally;
                 v.is_alive = t == 3 || (t == 4 && v.is_alive);
@@ -256,16 +248,16 @@ impl SparseGridAB {
     // }
 }
 
-pub struct UniverseAB {
-    pub grid: SparseGridAB,
+pub struct Universe {
+    pub grid: SparseGridGenerations,
     pub generation: usize,
 }
 
 #[allow(unused)]
-impl UniverseAB {
+impl Universe {
     pub fn new() -> Self {
-        UniverseAB {
-            grid: SparseGridAB::new(),
+        Universe {
+            grid: SparseGridGenerations::new(),
             generation: 0,
         }
     }
@@ -317,7 +309,7 @@ mod tests {
 
     #[test]
     fn test_get_set_orig() {
-        let mut g: SparseGrid = SparseGrid::new();
+        let mut g: SparseGridOld = SparseGridOld::new();
 
         assert_eq!(g.get(&K1), None);
 
@@ -328,8 +320,8 @@ mod tests {
     }
 
     #[test]
-    fn test_get_set_ab() {
-        let mut g: SparseGridAB = SparseGridAB::new();
+    fn test_get_set_generations() {
+        let mut g: SparseGridGenerations = SparseGridGenerations::new();
 
         assert_eq!(g.is_alive(&K1), false);
 
@@ -341,7 +333,7 @@ mod tests {
 
     #[test]
     fn test_retain_orig() {
-        let mut g = SparseGrid::new();
+        let mut g = SparseGridOld::new();
 
         g.set(K1, 1);
         g.set(K2, 2);
@@ -357,7 +349,7 @@ mod tests {
 
     #[test]
     fn test_tally_orig() {
-        let mut g = SparseGrid::new();
+        let mut g = SparseGridOld::new();
 
         g.tally(&[K1, K2]);
         g.tally(&[K2]);
@@ -367,8 +359,8 @@ mod tests {
     }
 
     #[test]
-    fn test_blinker_ab() {
-        let mut universe = UniverseAB::new();
+    fn test_blinker_generations() {
+        let mut universe = Universe::new();
 
         universe.grid.set(K1);
         universe.grid.set(K2);

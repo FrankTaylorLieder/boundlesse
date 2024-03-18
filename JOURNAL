@@ -169,7 +169,11 @@ Commit: cc0abd4
       - Glider when set to 1000 FPS, updates 50/s.
       - Seems to be best of both worlds!
 
-Commit:
+Commit: 0761490
+
+  - Change FPS by 10%
+  - Tidy up benchmarks and Universe/Grid naming
+
 
   - TODO Run updates in a separate thread to void locking the UI for slow updates?
   - TODO RLE import: center pattern on screen. Place 0,0 at the center?

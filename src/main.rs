@@ -14,7 +14,7 @@ use std::time::SystemTime;
 use std::{env, thread};
 
 mod grid;
-use grid::{GridCoord, UniverseAB};
+use grid::{GridCoord, Universe};
 use rle::{load_rle, Inject};
 
 mod rle;
@@ -26,8 +26,8 @@ fn now() -> u128 {
     duration_since_epoch.as_nanos() / 1000
 }
 
-// Don't start additional udpates in Update() if we've spent more than this time (ms) here already.
-const LIVENESS_TARGET: u128 = 100;
+// Don't start additional udpates in Update() if we've spent more than this time (1000th ms) here already.
+const LIVENESS_TARGET: u128 = 100 * 1000;
 const DEFAULT_WINDOW_SIZE: (f32, f32) = (2000.0, 1500.0);
 
 #[derive(Debug)]
@@ -100,7 +100,7 @@ const TEXT_COLOR: Color = Color::BLACK;
 
 struct State {
     view_params: ViewParams,
-    universe: UniverseAB,
+    universe: Universe,
     show_grid: bool,
     fps: u32,
     running: bool,
@@ -117,7 +117,7 @@ impl State {
     pub fn new(ctx: &mut Context) -> Self {
         State {
             view_params: ViewParams::default(),
-            universe: UniverseAB::new(),
+            universe: Universe::new(),
             show_grid: true,
             fps: 10,
             running: false,
@@ -226,7 +226,7 @@ impl EventHandler<GameError> for State {
             self.dirty = true;
 
             let ds = now() - us;
-            trace!("Update done: {ds} - {}", self.cell_count);
+            debug!("Update done: {ds} - {}", self.cell_count);
         }
 
         Ok(())
@@ -361,10 +361,10 @@ impl EventHandler<GameError> for State {
                 self.running ^= true;
             }
             if keycode == KeyCode::Plus || keycode == KeyCode::Equals {
-                self.fps += 1;
+                self.fps += u32::max(self.fps / 10, 1);
             }
             if (keycode == KeyCode::Minus || keycode == KeyCode::Underline) && self.fps > 1 {
-                self.fps -= 1;
+                self.fps -= u32::max(self.fps / 10, 1);
             }
             if keycode == KeyCode::Up {
                 self.view_params.yt += pan_delta;
@@ -383,7 +383,7 @@ impl EventHandler<GameError> for State {
                 self.view_params.yt = 0;
             }
             if keycode == KeyCode::Delete || keycode == KeyCode::Back {
-                self.universe = UniverseAB::new();
+                self.universe = Universe::new();
             }
             if keycode == KeyCode::G {
                 self.show_grid = !self.show_grid;
